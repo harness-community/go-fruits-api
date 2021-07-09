@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fruits-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: fruits-api
+      labels:
+        app: fruits-api
+        version: v1.0
+    spec:
+      volumes:
+        - name: fruits-db-dir
+          persistentVolumeClaim:
+            claimName: fruits-db-pvc
+      containers:
+        - name: fruits-api
+          image: ko://github.com/kameshsampath/go-fruits-api/cmd
+          imagePullPolicy: Always
+          env:
+            - name: GIN_MODE
+              value: "release"
+            - name: FRUITS_DB_DIR
+              value: "/fruits-app"
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /v1/health/live
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /v1/health/ready
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "200Mi"
+            requests:
+              cpu: "50m"
+              memory: "100Mi"
+          volumeMounts:
+            - mountPath: /fruits-app
+              name: fruits-db-dir
+      restartPolicy: Always
+      serviceAccountName: fruits-api-sa
+  selector:
+    matchLabels:
+      app: fruits-api
+      version: v1.0

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpie
+  labels:
+    app: httpie
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: httpie
+      labels:
+        app: httpie
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: httpie
+          image: alpine/httpie
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - tail -f /dev/null
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app: httpie

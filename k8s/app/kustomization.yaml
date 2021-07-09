@@ -1,0 +1,10 @@
+namespace: fruits-app
+commonLabels:
+  app: fruits-api
+  version: v1.0
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - pvc.yaml
+  - service.yaml
+  - rbac.yaml
