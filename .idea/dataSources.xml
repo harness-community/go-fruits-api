@@ -9,5 +9,12 @@
       <jdbc-url>jdbc:sqlite:$USER_HOME$/tmp/fruits.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="PostgreSQL - demodb@localhost" uuid="ba205283-f22b-4719-a310-d78b0dbfd61c">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/demodb</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

@@ -1,5 +1,5 @@
 ---
-- name: "Fruits App Demo with Istio"
+- name: "Fruits App Demo with Gloo Edge Enterprise and Istio"
   hosts: localhost
   connection: local
 
@@ -23,10 +23,25 @@
     ## Istio Configurations
     ####
     deploy_istio: true
-    ## Istio Ingress Gateway
-    deploy_istio_gateway: true
     istio_versions:
       - "1.10.2"
+    ####
+    ## Gloo Edge Configuration
+    ####
+    # Gloo Edge Setup
+    deploy_gloo_edge: false
+    # deploy Gloo Edge Enterprise
+    gloo_edge_edition: "ce"
+    # Enable/disable discovery true/false
+    gloo_discovery_enabled: false
+    # Namespace to install Gloo into
+    gloo_write_namespace: my-gloo
+    # Gloo Watch Namespaces
+    gloo_watch_namespaces:
+      - fruits-app
+      - my-gloo
+    # Use NodePorts for Gloo Proxy http/https true/false
+    gloo_proxy_nodeport: true
 
   roles:
     - kameshsampath.kubernetes_spices.kind

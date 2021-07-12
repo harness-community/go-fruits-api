@@ -1,0 +1,16 @@
+namespace: db
+commonLabels:
+  app: postgresql
+secretGenerator:
+  - name: pgsql-credentials
+    literals:
+      - username=demo
+      - password=pa55Word!
+      - database=demodb
+      - hostname=postgresql.db.svc.local
+      - port=5432
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - pvc.yaml
+  - service.yaml

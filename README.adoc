@@ -62,11 +62,24 @@ The following commands set up a KinD cluster with Istio and Gloo Edge enterprise
 ansible-playbook cluster-setup-ee.yaml
 ----
 
+== Deploy Database
+
+[source,shell]
+----
+k apply -k k8s/db
+----
+Wait for pods to be in running state:
+
+[source,shell]
+----
+kubectl rollout status -n db deploy/postgresql --timeout=60s
+----
+
 == Deploy application
 
 [source,shell]
 ----
-kubectl apply -k $PROJECT_HOME/k8s/app
+kustomize build k8s/app | ko resolve -f - | k apply -f -
 ----
 
 Wait for pods to be in running state:

@@ -1,0 +1,50 @@
+---
+- name: "Fruits App Demo with Gloo Edge Community and Istio"
+  hosts: localhost
+  connection: local
+
+  collections:
+    - kubernetes.core
+    - kameshsampath.kubernetes_spices
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    ####
+    ## KinD cluster setup
+    ####
+    cluster_name: fruits-app-demo
+    # valid values are ipv4, ipv6, dual
+    kind_ip_family: ipv4
+    # Create Cluster
+    kind_create: false
+    # Destroy Cluster
+    kind_destroy: true
+    ####
+    ## Istio Configurations
+    ####
+    deploy_istio: true
+    istio_versions:
+      - "1.10.2"
+    ####
+    ## Gloo Edge Configuration
+    ####
+    # Gloo Edge Setup
+    deploy_gloo_edge: false
+    # deploy Gloo Edge Enterprise
+    gloo_edge_edition: "ee"
+    # Set Gloo Edge Enterprise License Key
+    gloo_license_key: "{{ ansible_env.GLOO_LICENSE_KEY }}"
+    # Enable/disable discovery true/false
+    gloo_discovery_enabled: false
+    # Namespace to install Gloo into
+    gloo_write_namespace: my-gloo
+    # Gloo Watch Namespaces
+    gloo_watch_namespaces:
+      - fruits-app
+      - my-gloo
+    # Use NodePorts for Gloo Proxy http/https true/false
+    gloo_proxy_nodeport: true
+
+  roles:
+    - kameshsampath.kubernetes_spices.kind
+    - kameshsampath.kubernetes_spices.k8s_app_spices

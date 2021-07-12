@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: fruits-app
-  labels:
-    istio.io/rev: 1-10-2

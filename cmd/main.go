@@ -4,90 +4,90 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	routes "github.com/kameshsampath/go-fruits-api/pkg/routes"
+	_ "github.com/kameshsampath/go-fruits-api/docs"
+	"github.com/kameshsampath/go-fruits-api/pkg/data"
+	"github.com/kameshsampath/go-fruits-api/pkg/routes"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	// _ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 )
 
-//DDLFRUITSTABLE  creates the database
-const DDLFRUITSTABLE = `
-DROP TABLE IF EXISTS fruits;
-CREATE TABLE IF NOT EXISTS fruits (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-name TEXT NOT NULL,
-season TEXT NOT NULL,
-emoji TEXT)`
-
 var (
-	dbDir  string
-	db     *sql.DB
-	err    error
-	dbFile string
-	router *gin.Engine
+	db             *sql.DB
+	err            error
+	dbFile         string
+	router         *gin.Engine
+	httpListenPort = "8080"
+	pgHost         = "localhost"
+	pgPort         = "5432"
+	pgUser         = "demo"
+	pgPassword     = "pa55Word!"
+	pgDatabase     = "demodb"
 )
 
-func init() {
-	if dbDir = os.Getenv("FRUITS_DB_DIR"); dbDir == "" {
-		homedir, _ := os.UserHomeDir()
-		dbDir = filepath.Join(homedir, ".fruits-app")
-	}
-	if _, err := os.Stat(dbDir); err != nil {
-		if err = os.Mkdir(dbDir, os.ModeDir); err != nil {
-			panic(fmt.Sprintf("Error creating DB Dir %s", dbDir))
-		}
-	}
-}
+// @title Fruits API
+// @version 1.0
+// @description The Fruits API that defines few REST operations with Fruits used for demos
 
-func addRoutes() {
-	v1 := router.Group("/v1")
-	routes.HealthResource(v1)
-	routes.FruitsResource(v1, db)
-}
+// @contact.name Kamesh Sampath
+// @contact.email kamesh.sampath@solo.io
 
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /v1/api
+// @query.collection.format multi
+// @schemes http https
 func main() {
-
-	if err == nil {
-		dbFile = filepath.Join(dbDir, "fruits.db")
-		db, err = sql.Open("sqlite3", dbFile)
-		if err != nil {
-			log.Fatalf("Error opening DB %s, reason %s", dbFile, err)
-		}
-		//TODO Graceful shutdown
-		defer db.Close()
-
-		_, err = db.Exec(DDLFRUITSTABLE)
-		if err != nil {
-			log.Fatalf("Error initializing DB: %s", err)
-		}
-		//Load some data
-		loadFruits()
+	if h := os.Getenv("POSTGRES_HOST"); h != "" {
+		pgHost = h
 	}
+	if p := os.Getenv("POSTGRES_PORT"); p != "" {
+		pgPort = p
+	}
+	if h := os.Getenv("POSTGRES_USER"); h != "" {
+		pgUser = h
+	}
+	if p := os.Getenv("POSTGRES_PASSWORD"); p != "" {
+		pgPassword = p
+	}
+	if d := os.Getenv("POSTGRES_DB"); d != "" {
+		pgDatabase = d
+	}
+	pgsqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		pgHost, pgPort, pgUser, pgPassword, pgDatabase)
+	db, err = sql.Open("postgres", pgsqlInfo)
+	if err != nil {
+		log.Fatalf("Error opening DB %s, reason %s", dbFile, err)
+	}
+	//TODO Graceful shutdown
+	defer db.Close()
+
+	_, err = db.Exec(data.DDLFRUITSTABLE)
+	if err != nil {
+		log.Fatalf("Error initializing DB: %s", err)
+	}
+	//Load some data
+	loadFruits()
 
 	if mode := os.Getenv("GIN_MODE"); mode != "" {
 		gin.SetMode(mode)
 	}
 	router = gin.Default()
-	// this is liberal CORS settings only for demo
-	router.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"*"},
-		AllowHeaders:     []string{"*"},
-		ExposeHeaders:    []string{"*"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
 	addRoutes()
 	server := &http.Server{
 		Handler: router,
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf(":%s", httpListenPort),
 	}
 
 	// Initializing the server in a goroutine so that
@@ -112,6 +112,34 @@ func main() {
 	}
 
 	log.Println("Server Exiting")
+}
+
+func addRoutes() {
+	endpoints := routes.NewEndpoints()
+	endpoints.DB = db
+	v1 := router.Group("/v1/api")
+	{
+		//Health Endpoints accessible via /v1/api/health
+		health := v1.Group("/health")
+		{
+			health.GET("/live", endpoints.Live)
+			health.GET("/ready", endpoints.Ready)
+		}
+
+		//Fruits API endpoints
+		fruits := v1.Group("/fruits")
+		{
+			fruits.POST("/add", endpoints.AddFruit)
+			fruits.GET("/", endpoints.ListFruits)
+			fruits.DELETE("/:id", endpoints.DeleteFruit)
+			fruits.GET(":name", endpoints.GetFruitsByName)
+			fruits.GET("/season/:season", endpoints.GetFruitsBySeason)
+		}
+	}
+
+	// the default path to get swagger json is :8080/swagger/docs.json
+	// TODO enable/disable based on ENV variable
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 
 func loadFruits() {

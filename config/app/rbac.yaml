@@ -2,4 +2,4 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: fruits-api
+  name: fruits-api-sa

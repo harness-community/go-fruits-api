@@ -1,0 +1,270 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "The Fruits API that defines few REST operations with Fruits used for demos",
+        "title": "Fruits API",
+        "contact": {
+            "name": "Kamesh Sampath",
+            "email": "kamesh.sampath@solo.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/v1/api",
+    "paths": {
+        "/fruits": {
+            "get": {
+                "description": "Gets a list all available fruits from the database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Gets all fruits",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.Fruit"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/fruits/add": {
+            "post": {
+                "description": "Adds a new Fruit to the Database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Add fruit to Database",
+                "parameters": [
+                    {
+                        "description": "Fruit object",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Fruit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Fruit"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/fruits/{fruit_id}": {
+            "delete": {
+                "description": "Deletes a Fruit to the Database",
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Delete a fruit from Database",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Fruit ID",
+                        "name": "param",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/fruits/{fruit_name}": {
+            "get": {
+                "description": "Gets list of fruits by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Gets fruits by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full or partial name of the fruit",
+                        "name": "param",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.Fruit"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/fruits/{season}": {
+            "get": {
+                "description": "Gets a list of fruits by season",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Gets fruits by season",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full or partial name of the season",
+                        "name": "param",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.Fruit"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/live": {
+            "get": {
+                "description": "Checks the API liveness, can be used with Kubernetes Probes",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Checks the API liveness",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/ready": {
+            "get": {
+                "description": "Checks the API readiness, can be used with Kubernetes Probes",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Checks the API readiness",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "routes.Fruit": {
+            "type": "object",
+            "properties": {
+                "emoji": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "season": {
+                    "type": "string"
+                }
+            }
+        },
+        "utils.HTTPError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "status bad request"
+                }
+            }
+        }
+    }
+}

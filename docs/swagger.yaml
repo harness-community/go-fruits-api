@@ -1,0 +1,179 @@
+basePath: /v1/api
+definitions:
+  routes.Fruit:
+    properties:
+      emoji:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      season:
+        type: string
+    type: object
+  utils.HTTPError:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: status bad request
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: kamesh.sampath@solo.io
+    name: Kamesh Sampath
+  description: The Fruits API that defines few REST operations with Fruits used for
+    demos
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Fruits API
+  version: "1.0"
+paths:
+  /fruits:
+    get:
+      description: Gets a list all available fruits from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.Fruit'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Gets all fruits
+      tags:
+      - fruit
+  /fruits/{fruit_id}:
+    delete:
+      description: Deletes a Fruit to the Database
+      parameters:
+      - description: Fruit ID
+        in: path
+        name: param
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: ""
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Delete a fruit from Database
+      tags:
+      - fruit
+  /fruits/{fruit_name}:
+    get:
+      description: Gets list of fruits by name
+      parameters:
+      - description: Full or partial name of the fruit
+        in: path
+        name: param
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.Fruit'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Gets fruits by name
+      tags:
+      - fruit
+  /fruits/{season}:
+    get:
+      description: Gets a list of fruits by season
+      parameters:
+      - description: Full or partial name of the season
+        in: path
+        name: param
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.Fruit'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Gets fruits by season
+      tags:
+      - fruit
+  /fruits/add:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new Fruit to the Database
+      parameters:
+      - description: Fruit object
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Fruit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Fruit'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Add fruit to Database
+      tags:
+      - fruit
+  /health/live:
+    get:
+      description: Checks the API liveness, can be used with Kubernetes Probes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Checks the API liveness
+      tags:
+      - health
+  /health/ready:
+    get:
+      description: Checks the API readiness, can be used with Kubernetes Probes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Checks the API readiness
+      tags:
+      - health
+schemes:
+- http
+- https
+swagger: "2.0"

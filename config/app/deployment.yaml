@@ -22,16 +22,39 @@ spec:
           env:
             - name: GIN_MODE
               value: "release"
-            - name: FRUITS_DB_DIR
-              value: "/fruits-app"
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: hostname
+                  name: pgsql-credentials
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: port
+                  name: pgsql-credentials
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: pgsql-credentials
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: pgsql-credentials
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: database
+                  name: pgsql-credentials
           livenessProbe:
             httpGet:
               port: 8080
-              path: /v1/health/live
+              path: /v1/api/health/live
           readinessProbe:
             httpGet:
               port: 8080
-              path: /v1/health/ready
+              path: /v1/api/health/ready
           resources:
             limits:
               cpu: "100m"
@@ -40,7 +63,7 @@ spec:
               cpu: "50m"
               memory: "100Mi"
           volumeMounts:
-            - mountPath: /fruits-app
+            - mountPath: /fruits-db
               name: fruits-db-dir
       restartPolicy: Always
       serviceAccountName: fruits-api-sa

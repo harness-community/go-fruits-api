@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  labels:
+    app: postgresql
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: postgresql
+      labels:
+        app: postgresql
+    spec:
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: pgdata-pvc
+      containers:
+        - name: postgresql
+          image: postgres:13.2-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: pgsql-credentials
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: pgsql-credentials
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: database
+                  name: pgsql-credentials
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: pgdata
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app: postgresql
