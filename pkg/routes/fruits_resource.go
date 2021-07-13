@@ -8,6 +8,7 @@ import (
 	"github.com/kameshsampath/gloo-fruits-api/pkg/utils"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -20,8 +21,8 @@ var (
 // @Tags fruit
 // @Accept json
 // @Produce json
-// @Param message body routes.Fruit true "Fruit object"
-// @Success 200 {object} routes.Fruit
+// @Param message body data.Fruit true "Fruit object"
+// @Success 200 {object} data.Fruit
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/add [post]
 func (e *Endpoints) AddFruit(c *gin.Context) {
@@ -122,7 +123,7 @@ func (e *Endpoints) DeleteFruit(c *gin.Context) {
 // @Tags fruit
 // @Produce json
 // @Param fruit_name param path string true "Full or partial name of the fruit"
-// @Success 200 {object} routes.Fruits
+// @Success 200 {object} data.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/{fruit_name} [get]
 func (e *Endpoints) GetFruitsByName(c *gin.Context) {
@@ -131,7 +132,7 @@ func (e *Endpoints) GetFruitsByName(c *gin.Context) {
 		utils.NewError(c, http.StatusNotFound, err)
 		return
 	} else {
-		if rows, err := stmt.Query("%" + name + "%"); err != nil {
+		if rows, err := stmt.Query("%" + strings.ToLower(name) + "%"); err != nil {
 			utils.NewError(c, http.StatusNotFound, err)
 			return
 		} else {
@@ -147,20 +148,21 @@ func (e *Endpoints) GetFruitsByName(c *gin.Context) {
 // @Tags fruit
 // @Produce json
 // @Param season param path string true "Full or partial name of the season"
-// @Success 200 {object} routes.Fruits
+// @Success 200 {object} data.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{season} [get]
+//@Router /fruits/season/{season} [get]
 func (e *Endpoints) GetFruitsBySeason(c *gin.Context) {
 	season := c.Param("season")
 	if stmt, err := e.DB.Prepare(data.DMLGETFRUITBYSEASON); err != nil {
 		utils.NewError(c, http.StatusNotFound, err)
 		return
 	} else {
-		if rows, err := stmt.Query("%" + season + "%"); err != nil {
+		if rows, err := stmt.Query("%" + strings.ToLower(season) + "%"); err != nil {
 			utils.NewError(c, http.StatusNotFound, err)
 			return
 		} else {
 			fr := buildFruitsResponse(rows, err)
+			log.Printf("ROWS:%s", fr)
 			c.JSON(http.StatusOK, fr)
 		}
 	}
@@ -171,7 +173,7 @@ func (e *Endpoints) GetFruitsBySeason(c *gin.Context) {
 // @Description Gets a list all available fruits from the database
 // @Tags fruit
 // @Produce json
-// @Success 200 {object} routes.Fruits
+// @Success 200 {object} data.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits [get]
 func (e *Endpoints) ListFruits(c *gin.Context) {

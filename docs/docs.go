@@ -47,7 +47,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/routes.Fruit"
+                                "$ref": "#/definitions/data.Fruit"
                             }
                         }
                     },
@@ -80,7 +80,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/routes.Fruit"
+                            "$ref": "#/definitions/data.Fruit"
                         }
                     }
                 ],
@@ -88,7 +88,45 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/routes.Fruit"
+                            "$ref": "#/definitions/data.Fruit"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/fruits/season/{season}": {
+            "get": {
+                "description": "Gets a list of fruits by season",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Gets fruits by season",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full or partial name of the season",
+                        "name": "param",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/data.Fruit"
+                            }
                         }
                     },
                     "404": {
@@ -154,45 +192,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/routes.Fruit"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPError"
-                        }
-                    }
-                }
-            }
-        },
-        "/fruits/{season}": {
-            "get": {
-                "description": "Gets a list of fruits by season",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "fruit"
-                ],
-                "summary": "Gets fruits by season",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Full or partial name of the season",
-                        "name": "param",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/routes.Fruit"
+                                "$ref": "#/definitions/data.Fruit"
                             }
                         }
                     },
@@ -247,7 +247,7 @@ var doc = `{
         }
     },
     "definitions": {
-        "routes.Fruit": {
+        "data.Fruit": {
             "type": "object",
             "properties": {
                 "emoji": {

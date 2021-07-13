@@ -1,6 +1,6 @@
 basePath: /v1/api
 definitions:
-  routes.Fruit:
+  data.Fruit:
     properties:
       emoji:
         type: string
@@ -43,7 +43,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/routes.Fruit'
+              $ref: '#/definitions/data.Fruit'
             type: array
         "404":
           description: Not Found
@@ -87,7 +87,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/routes.Fruit'
+              $ref: '#/definitions/data.Fruit'
             type: array
         "404":
           description: Not Found
@@ -96,7 +96,33 @@ paths:
       summary: Gets fruits by name
       tags:
       - fruit
-  /fruits/{season}:
+  /fruits/add:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new Fruit to the Database
+      parameters:
+      - description: Fruit object
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/data.Fruit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.Fruit'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Add fruit to Database
+      tags:
+      - fruit
+  /fruits/season/{season}:
     get:
       description: Gets a list of fruits by season
       parameters:
@@ -112,39 +138,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/routes.Fruit'
+              $ref: '#/definitions/data.Fruit'
             type: array
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/utils.HTTPError'
       summary: Gets fruits by season
-      tags:
-      - fruit
-  /fruits/add:
-    post:
-      consumes:
-      - application/json
-      description: Adds a new Fruit to the Database
-      parameters:
-      - description: Fruit object
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/routes.Fruit'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/routes.Fruit'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.HTTPError'
-      summary: Add fruit to Database
       tags:
       - fruit
   /health/live:
