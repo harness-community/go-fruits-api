@@ -1,4 +1,4 @@
-module github.com/kameshsampath/go-fruits-api
+module github.com/kameshsampath/gloo-fruits-api
 
 go 1.16
 

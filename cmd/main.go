@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	_ "github.com/kameshsampath/go-fruits-api/docs"
-	"github.com/kameshsampath/go-fruits-api/pkg/data"
-	"github.com/kameshsampath/go-fruits-api/pkg/routes"
+	_ "github.com/kameshsampath/gloo-fruits-api/docs"
+	"github.com/kameshsampath/gloo-fruits-api/pkg/data"
+	"github.com/kameshsampath/gloo-fruits-api/pkg/routes"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 

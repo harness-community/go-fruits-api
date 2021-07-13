@@ -43,25 +43,35 @@ func (e *Endpoints) AddFruit(c *gin.Context) {
 				utils.NewError(c, http.StatusNotFound, err)
 				return
 			} else {
-				if rs, err := stmt.Exec(fruit.Name, fruit.Season, fruit.Emoji); err != nil {
+				if _, err := stmt.Exec(fruit.Name, fruit.Season, fruit.Emoji); err != nil {
 					utils.NewError(c, http.StatusNotFound, err)
 					if err = tx.Rollback(); err != nil {
 						log.Fatalf("Unable to rollback transaction %s", err)
 					}
 					return
 				} else {
-					if pk, err := rs.LastInsertId(); err != nil {
-						log.Println("Unable to get the primary key, rolling back transaction")
+					if rows, err := e.DB.Query(data.FRUITSIDSEQ); err != nil {
+						log.Printf("Unable to get the primary key %s, rolling back transaction", err)
 						utils.NewError(c, http.StatusNotFound, err)
 						if err = tx.Rollback(); err != nil {
 							log.Fatalf("Unable to rollback transaction %s", err)
 						}
 						return
 					} else {
-						log.Printf("Successfully saved, with id %d", pk)
-						fruit.Id = pk
-						c.JSON(http.StatusCreated, fruit)
-						tx.Commit()
+						for rows.Next() {
+							if err = rows.Scan(&fruit.Id); err != nil {
+								utils.NewError(c, http.StatusNotFound, err)
+								if err = tx.Rollback(); err != nil {
+									log.Fatalf("Unable to rollback transaction %s", err)
+								}
+								return
+							}
+							log.Printf("Successfully saved, with id %d", fruit.Id)
+							c.JSON(http.StatusCreated, fruit)
+							if err := tx.Commit(); err != nil {
+								log.Fatalf("Unable to commit transaction %s", err)
+							}
+						}
 					}
 				}
 			}
@@ -98,7 +108,9 @@ func (e *Endpoints) DeleteFruit(c *gin.Context) {
 			} else {
 				log.Printf("Successfully deleted fruit with id %s", id)
 				c.Writer.WriteHeader(http.StatusNoContent)
-				tx.Commit()
+				if err := tx.Commit(); err != nil {
+					log.Fatalf("Unable to commit transaction %s", err)
+				}
 			}
 		}
 	}

@@ -14,6 +14,7 @@ emoji VARCHAR)`
 	DMLGETFRUITBYNAME   = `SELECT * FROM fruits WHERE NAME LIKE ? COLLATE NOCASE ORDER BY name ASC`
 	DMLGETFRUITBYSEASON = `SELECT * FROM fruits WHERE SEASON LIKE ? COLLATE NOCASE ORDER BY name ASC`
 	DMLFRUITBYID        = `DELETE FROM fruits WHERE id = $1`
+	FRUITSIDSEQ         = `SELECT currval('fruits_id_seq') as id`
 )
 
 //Fruit model to hold the Fruit data

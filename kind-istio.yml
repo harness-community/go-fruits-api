@@ -17,8 +17,6 @@
     kind_ip_family: ipv4
     # Create Cluster
     kind_create: false
-    # Destroy Cluster
-    kind_destroy: true
     ####
     ## Istio Configurations
     ####
