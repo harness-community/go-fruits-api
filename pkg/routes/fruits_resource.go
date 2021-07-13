@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/kameshsampath/go-fruits-api/pkg/data"
-	"github.com/kameshsampath/go-fruits-api/pkg/utils"
+	"github.com/kameshsampath/gloo-fruits-api/pkg/data"
+	"github.com/kameshsampath/gloo-fruits-api/pkg/utils"
 	"log"
 	"net/http"
 )
