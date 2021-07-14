@@ -1,0 +1,39 @@
+name: Build Image
+on: [ push ]
+
+jobs:
+  build:
+    name: Build Fruits API Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log in to Quay.io Registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Build Fruits API Container
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: kameshsampath/fruits-api
+          tags: latest ${{ github.sha }}
+          dockerfiles: |
+            ./Dockerfile
+
+      - name: Push To quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/kameshsampath
+          username: kameshsampath
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Print image url
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"

@@ -6,8 +6,8 @@ metadata:
 spec:
   kube:
     selector:
-      app: fruits-api
+      app: cmd
       version: v1.0
-    serviceName: fruits-api
+    serviceName: cmd
     serviceNamespace: fruits-app
     servicePort: 8080

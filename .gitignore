@@ -33,3 +33,8 @@ nbdist/
 
 .DS_Store
 .vscode
+
+hack/env/cmdline
+hack/env/envvars
+hack/env/extravars
+hack/project/.tool-versions

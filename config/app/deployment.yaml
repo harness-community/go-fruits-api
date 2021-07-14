@@ -17,7 +17,7 @@ spec:
             claimName: fruits-db-pvc
       containers:
         - name: fruits-api
-          image: ko://github.com/kameshsampath/gloo-fruits-api/fruits-api
+          image: ko://github.com/kameshsampath/gloo-fruits-api
           imagePullPolicy: Always
           env:
             - name: GIN_MODE
@@ -66,7 +66,7 @@ spec:
             - mountPath: /fruits-db
               name: fruits-db-dir
       restartPolicy: Always
-      serviceAccountName: fruits-api-sa
+      serviceAccountName: cmd-sa
   selector:
     matchLabels:
       app: fruits-api

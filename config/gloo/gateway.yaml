@@ -16,5 +16,5 @@ spec:
               - weight: 100
                 destination:
                   upstream:
-                    name: fruits-app-fruits-api-8080
+                    name: fruits-app-cmd-8080
                     namespace: my-gloo
