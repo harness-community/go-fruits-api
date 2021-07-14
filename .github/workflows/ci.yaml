@@ -1,6 +1,10 @@
 name: Build Image
 on: [ push ]
 
+env:
+  CONTAINER_REGISTRY: ghcr.io
+  GHCR_USERNAME: kameshsampath
+
 jobs:
   build:
     name: Build Fruits API Image
@@ -9,13 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Log in to ghcr.io Registry
+      - name: Log in to ${{ env.CONTAINER_REGISTRY}} Registry
         uses: redhat-actions/podman-login@v1
         with:
           registry: ghcr.io
-          username: ${{ secrets.QUAY_USERNAME }}
+          username: ${{ env.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_PAT }}
-          
+
 
       - name: Build Fruits API Container
         id: build-image
@@ -32,8 +36,8 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: gchr.io
-          username: ${{ secrets.QUAY_USERNAME }}
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Print image url
