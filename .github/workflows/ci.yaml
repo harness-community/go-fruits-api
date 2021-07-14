@@ -9,12 +9,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Log in to Quay.io Registry
+      - name: Log in to ghcr.io Registry
         uses: redhat-actions/podman-login@v1
         with:
-          registry: quay.io
+          registry: ghcr.io
           username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_TOKEN }}
+          password: ${{ secrets.GCHR_PAT }}
+          
 
       - name: Build Fruits API Container
         id: build-image
@@ -25,15 +26,15 @@ jobs:
           dockerfiles: |
             ./Dockerfile
 
-      - name: Push To quay.io
-        id: push-to-quay
+      - name: Push To ghcr.io
+        id: push-to-registry
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: quay.io/kameshsampath
+          registry: gchr.io
           username: kameshsampath
-          password: ${{ secrets.QUAY_TOKEN }}
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Print image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
