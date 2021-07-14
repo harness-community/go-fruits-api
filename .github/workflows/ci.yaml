@@ -14,7 +14,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.GCHR_PAT }}
+          password: ${{ secrets.GHCR_PAT }}
           
 
       - name: Build Fruits API Container
@@ -33,7 +33,7 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: gchr.io
-          username: kameshsampath
+          username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Print image url
