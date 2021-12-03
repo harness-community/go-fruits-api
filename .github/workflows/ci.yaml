@@ -25,7 +25,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: kameshsampath/fruits-api
+          image: kameshsampath/gloo-fruits-api
           tags: latest ${{ github.sha }}
           dockerfiles: |
             ./Dockerfile
