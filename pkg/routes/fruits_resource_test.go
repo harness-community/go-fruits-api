@@ -38,7 +38,7 @@ func getDBFile(dbName string) string {
 }
 
 func loadFixtures() (*db.Config, error) {
-	log = utils.LogSetup(os.Stdout, "debug")
+	log = utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
 	dbc := db.New(
 		db.WithContext(context.TODO()),
 		db.WithLogger(log),
