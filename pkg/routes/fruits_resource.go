@@ -1,19 +1,16 @@
 package routes
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-	"github.com/kameshsampath/go-fruits-api/pkg/data"
+	"github.com/kameshsampath/go-fruits-api/pkg/db"
 	"github.com/kameshsampath/go-fruits-api/pkg/utils"
-)
-
-var (
-	err error
+	"github.com/labstack/echo/v4"
+	"github.com/uptrace/bun"
 )
 
 //AddFruit godoc
@@ -26,57 +23,31 @@ var (
 // @Success 200 {object} data.Fruit
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/add [post]
-func (e *Endpoints) AddFruit(c *gin.Context) {
-	var fruit data.Fruit
-	if err = c.ShouldBind(&fruit); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+func (e *Endpoints) AddFruit(c echo.Context) error {
+	log := e.Config.Log
+	ctx := e.Config.Ctx
+	dbConn := e.Config.DB
+	f := &db.Fruit{}
+	if err := c.Bind(f); err != nil {
+		return err
 	}
-	log.Printf("Saving Fruit %v", fruit)
-	var stmt *sql.Stmt
-	var rows *sql.Rows
-	if stmt, err = e.DB.Prepare(data.DMLINSERTFRUIT); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
-	}
-	if fruit.Emoji == "" {
-		//default set some plant emoji
-		fruit.Emoji = "U+1F33F"
-	}
-	var tx *sql.Tx
-	if tx, err = e.DB.Begin(); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
-	}
-	if _, err := stmt.Exec(fruit.Name, fruit.Season, fruit.Emoji); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatalf("Unable to rollback transaction %s", err)
+	log.Infof("Adding Fruit %#v", f)
+	err := dbConn.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		_, err := dbConn.NewInsert().
+			Model(f).
+			Exec(ctx)
+		if err != nil {
+			return err
 		}
-		return
+		return nil
+	})
+	if err != nil {
+		log.Errorf("Error adding fruit %v, %v", f, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
 	}
-	if rows, err = e.DB.Query(data.FRUITSIDSEQ); err != nil {
-		log.Printf("Unable to get the primary key %s, rolling back transaction", err)
-		utils.NewError(c, http.StatusNotFound, err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatalf("Unable to rollback transaction %s", err)
-		}
-		return
-	}
-	for rows.Next() {
-		if err = rows.Scan(&fruit.ID); err != nil {
-			utils.NewError(c, http.StatusNotFound, err)
-			if err = tx.Rollback(); err != nil {
-				log.Fatalf("Unable to rollback transaction %s", err)
-			}
-			return
-		}
-		log.Printf("Successfully saved, with id %d", fruit.ID)
-		c.JSON(http.StatusCreated, fruit)
-		if err := tx.Commit(); err != nil {
-			log.Fatalf("Unable to commit transaction %s", err)
-		}
-	}
+	log.Infof("Fruit %#v successfully saved", f)
+	c.JSON(http.StatusCreated, f)
+	return nil
 }
 
 // DeleteFruit godoc
@@ -87,32 +58,43 @@ func (e *Endpoints) AddFruit(c *gin.Context) {
 // @Success 204
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/{fruit_id} [delete]
-func (e *Endpoints) DeleteFruit(c *gin.Context) {
-	id := c.Param("id")
-	var tx *sql.Tx
-	var stmt *sql.Stmt
-	if stmt, err = e.DB.Prepare(data.DMLFRUITBYID); err != nil {
-		log.Printf("Error deleting row %v, %s", stmt, err)
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+func (e *Endpoints) DeleteFruit(c echo.Context) error {
+	log := e.Config.Log
+	ctx := e.Config.Ctx
+	dbConn := e.Config.DB
+	var ID int
+	if err := echo.PathParamsBinder(c).
+		Int("id", &ID).
+		BindError(); err != nil {
+		return err
 	}
-	if tx, err = e.DB.Begin(); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+	if ID == 0 {
+		err := fmt.Errorf("fruit with id %d not found", ID)
+		utils.NewHTTPError(c, http.StatusNotFound, err)
+		return err
 	}
-	if _, err = stmt.Exec(id); err != nil {
-		log.Printf("Error deleting row %v, %s", stmt, err)
-		utils.NewError(c, http.StatusNotFound, err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatalf("Unable to rollback transaction %s", err)
+	f := &db.Fruit{
+		ID: ID,
+	}
+	log.Infof("Deleting Fruit with id %d", ID)
+	err := dbConn.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		_, err := dbConn.NewDelete().
+			Model(f).
+			WherePK().
+			Exec(ctx)
+		if err != nil {
+			return err
 		}
-		return
+		return nil
+	})
+	if err != nil {
+		log.Errorf("Error deleting fruit with ID %d, %v", ID, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
-	log.Printf("Successfully deleted fruit with id %s", id)
-	c.Writer.WriteHeader(http.StatusNoContent)
-	if err := tx.Commit(); err != nil {
-		log.Fatalf("Unable to commit transaction %s", err)
-	}
+	log.Infof("Fruit with id  %d successfully deleted", ID)
+	c.NoContent(http.StatusNoContent)
+	return nil
 }
 
 // GetFruitsByName godoc
@@ -124,20 +106,30 @@ func (e *Endpoints) DeleteFruit(c *gin.Context) {
 // @Success 200 {object} data.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/{fruit_name} [get]
-func (e *Endpoints) GetFruitsByName(c *gin.Context) {
-	var stmt *sql.Stmt
-	name := c.Param("name")
-	if stmt, err = e.DB.Prepare(data.DMLGETFRUITBYNAME); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+func (e *Endpoints) GetFruitsByName(c echo.Context) error {
+	log := e.Config.Log
+	var name string
+	if err := echo.PathParamsBinder(c).
+		String("name", &name).
+		BindError(); err != nil {
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
-	var rows *sql.Rows
-	if rows, err = stmt.Query("%" + strings.ToLower(name) + "%"); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+	log.Infof("Getting Fruit with name %s", name)
+	ctx := e.Config.Ctx
+	dbConn := e.Config.DB
+	var fruits = &db.Fruits{}
+	if err := dbConn.NewSelect().
+		Model(fruits).
+		Where(`UPPER(name) LIKE ?`, fmt.Sprintf("%%%s%%", strings.ToUpper(name))).
+		Scan(ctx); err != nil {
+		log.Errorf("Error getting fruits by name %s, %v", name, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
-	fr := buildFruitsResponse(rows, err)
-	c.JSON(http.StatusOK, fr)
+	log.Infof("Found %d Fruits with name %s", fruits.Len(), name)
+	c.JSON(http.StatusOK, fruits)
+	return nil
 }
 
 // GetFruitsBySeason godoc
@@ -149,21 +141,30 @@ func (e *Endpoints) GetFruitsByName(c *gin.Context) {
 // @Success 200 {object} data.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/season/{season} [get]
-func (e *Endpoints) GetFruitsBySeason(c *gin.Context) {
-	season := c.Param("season")
-	var stmt *sql.Stmt
-	var rows *sql.Rows
-	if stmt, err = e.DB.Prepare(data.DMLGETFRUITBYSEASON); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
+	log := e.Config.Log
+	var season string
+	if err := echo.PathParamsBinder(c).
+		String("season", &season).
+		BindError(); err != nil {
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
-	if rows, err = stmt.Query("%" + strings.ToLower(season) + "%"); err != nil {
-		utils.NewError(c, http.StatusNotFound, err)
-		return
+	log.Infof("Getting Fruit for season %s", season)
+	ctx := e.Config.Ctx
+	dbConn := e.Config.DB
+	var fruits = &db.Fruits{}
+	if err := dbConn.NewSelect().
+		Model(fruits).
+		Where("UPPER(season) = ?", strings.ToUpper(season)).
+		Scan(ctx); err != nil {
+		log.Errorf("Error getting fruits for season %s, %v", season, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
-	fr := buildFruitsResponse(rows, err)
-	log.Printf("Rows:%v", fr)
-	c.JSON(http.StatusOK, fr)
+	log.Infof("Found %d Fruits for season %s", fruits.Len(), season)
+	c.JSON(http.StatusOK, fruits)
+	return nil
 }
 
 // ListFruits godoc
@@ -174,33 +175,20 @@ func (e *Endpoints) GetFruitsBySeason(c *gin.Context) {
 // @Success 200 {object} data.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits [get]
-func (e *Endpoints) ListFruits(c *gin.Context) {
-	var rows *sql.Rows
-	if err == nil {
-		if rows, err = e.DB.Query(data.DMLLISTFRUITS); err != nil {
-			utils.NewError(c, http.StatusNotFound, err)
-			return
-		}
-		fr := buildFruitsResponse(rows, err)
-		c.JSON(http.StatusOK, fr)
-	} else {
-		c.JSON(http.StatusNotFound, fmt.Sprintf("API unavailable %s", err))
+func (e *Endpoints) ListFruits(c echo.Context) error {
+	log := e.Config.Log
+	log.Infoln("Getting All Fruits ")
+	ctx := e.Config.Ctx
+	dbConn := e.Config.DB
+	var fruits = &db.Fruits{}
+	if err := dbConn.NewSelect().
+		Model(fruits).
+		Scan(ctx); err != nil {
+		log.Errorf("Error getting all fruits, %v", err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
-}
-
-func buildFruitsResponse(rows *sql.Rows, err error) data.Fruits {
-	if err != nil {
-		defer rows.Close()
-		var fr data.Fruits
-		for rows.Next() {
-			var f data.Fruit
-			if err := rows.Scan(&f.ID, &f.Name, &f.Season, &f.Emoji); err != nil {
-				log.Fatalf("Error reading row %s", err)
-			} else {
-				fr = append(fr, f)
-			}
-		}
-		return fr
-	}
+	log.Infof("Found %d Fruits", fruits.Len())
+	c.JSON(http.StatusOK, fruits)
 	return nil
 }

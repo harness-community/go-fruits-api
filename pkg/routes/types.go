@@ -1,13 +1,18 @@
 package routes
 
-import "database/sql"
+import (
+	"github.com/kameshsampath/go-fruits-api/pkg/db"
+)
 
 //Endpoints is the marker interface for defining routes
 type Endpoints struct {
-	DB *sql.DB
+	Config *db.Config
 }
 
 //NewEndpoints gives handle to REST Endpoints
-func NewEndpoints() *Endpoints {
-	return &Endpoints{}
+//dbType could be one of "pg","mysql","sqlite".Defaults to "sqlite"
+func NewEndpoints(dbc *db.Config) *Endpoints {
+	return &Endpoints{
+		Config: dbc,
+	}
 }

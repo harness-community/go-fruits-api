@@ -40,3 +40,4 @@ hack/env/extravars
 hack/project/.tool-versions
 .envrc.local
 dist/
+**/test.db

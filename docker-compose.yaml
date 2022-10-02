@@ -8,3 +8,7 @@ services:
       POSTGRES_PASSWORD: pa55Word!
       POSTGRES_USER: demo
       POSTGRES_DB: demodb
+  db-adminer:
+    image: adminer
+    ports:
+      - "9090:8080"

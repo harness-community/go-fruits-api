@@ -1,14 +1,14 @@
 package utils
 
-import "github.com/gin-gonic/gin"
+import "github.com/labstack/echo/v4"
 
-// NewError example
-func NewError(ctx *gin.Context, status int, err error) {
-	er := HTTPError{
+// NewHTTPError example
+func NewHTTPError(c echo.Context, status int, err error) {
+	httpErr := HTTPError{
 		Code:    status,
 		Message: err.Error(),
 	}
-	ctx.JSON(status, er)
+	c.JSON(status, httpErr)
 }
 
 // HTTPError example

@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 // Live godoc
@@ -12,8 +13,12 @@ import (
 // @Produce json
 // @Success 200 {object} string
 // @Router /health/live [get]
-func (e *Endpoints) Live(c *gin.Context) {
-	c.JSON(http.StatusOK, "live")
+func (e *Endpoints) Live(c echo.Context) error {
+	if err := e.Config.DB.Ping(); err == nil {
+		c.JSON(http.StatusOK, "live")
+	}
+	c.JSON(http.StatusNotFound, "dead")
+	return nil
 }
 
 // Ready godoc
@@ -23,6 +28,10 @@ func (e *Endpoints) Live(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} string
 // @Router /health/ready [get]
-func (e *Endpoints) Ready(c *gin.Context) {
-	c.JSON(http.StatusOK, "ready")
+func (e *Endpoints) Ready(c echo.Context) error {
+	if err := e.Config.DB.Ping(); err == nil {
+		c.JSON(http.StatusOK, "ready")
+	}
+	c.JSON(http.StatusNotFound, "not ready")
+	return nil
 }

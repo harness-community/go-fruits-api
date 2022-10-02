@@ -2,38 +2,31 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"flag"
 	"fmt"
+	"net/http"
+	"os/signal"
+	"time"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/kameshsampath/go-fruits-api/docs"
-	"github.com/kameshsampath/go-fruits-api/pkg/data"
+	"github.com/kameshsampath/go-fruits-api/pkg/db"
 	"github.com/kameshsampath/go-fruits-api/pkg/routes"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/kameshsampath/go-fruits-api/pkg/utils"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/sirupsen/logrus"
 
 	// _ "github.com/mattn/go-sqlite3"
-	"log"
-	"net/http"
+
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	_ "github.com/lib/pq"
 )
 
 var (
-	db             *sql.DB
-	err            error
-	dbFile         string
-	router         *gin.Engine
+	log            *logrus.Logger
 	httpListenPort = "8080"
-	pgHost         = "localhost"
-	pgPort         = "5432"
-	pgUser         = "demo"
-	pgPassword     = "pa55Word!"
-	pgDatabase     = "demodb"
+	router         *echo.Echo
 )
 
 // @title Fruits API
@@ -51,79 +44,67 @@ var (
 // @query.collection.format multi
 // @schemes http https
 func main() {
-	if h := os.Getenv("POSTGRES_HOST"); h != "" {
-		pgHost = h
-	}
-	if p := os.Getenv("POSTGRES_PORT"); p != "" {
-		pgPort = p
-	}
-	if h := os.Getenv("POSTGRES_USER"); h != "" {
-		pgUser = h
-	}
-	if p := os.Getenv("POSTGRES_PASSWORD"); p != "" {
-		pgPassword = p
-	}
-	if d := os.Getenv("POSTGRES_DB"); d != "" {
-		pgDatabase = d
-	}
-	pgsqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		pgHost, pgPort, pgUser, pgPassword, pgDatabase)
-	db, err = sql.Open("postgres", pgsqlInfo)
-	if err != nil {
-		log.Fatalf("Error opening DB %s, reason %s", dbFile, err)
-	}
-	//TODO Graceful shutdown
-	defer db.Close()
+	var v, dbType, dbFile string
+	flag.StringVar(&dbType, "dbtype", utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite"), "The database to use. Valid values are sqlite, pg, mysql")
+	flag.StringVar(&dbFile, "dbPath", utils.LookupEnvOrString("FRUITS_DB_FILE", "/data/db"), "Sqlite DB file")
+	flag.StringVar(&v, "level", utils.LookupEnvOrString("LOG_LEVEL", logrus.InfoLevel.String()), "The log level to use. Allowed values trace,debug,info,warn,fatal,panic.")
+	flag.Parse()
 
-	_, err = db.Exec(data.DDLFRUITSTABLE)
-	if err != nil {
-		log.Fatalf("Error initializing DB: %s", err)
-	}
-	//Load some data
-	loadFruits()
-
-	if mode := os.Getenv("GIN_MODE"); mode != "" {
-		gin.SetMode(mode)
-	}
-	router = gin.Default()
-	addRoutes()
-	s, _ := time.ParseDuration("3s")
-	server := &http.Server{
-		Handler:           router,
-		ReadHeaderTimeout: s,
-		Addr:              fmt.Sprintf(":%s", httpListenPort),
+	log = utils.LogSetup(os.Stdout, v)
+	dbc := db.New(
+		db.WithContext(context.Background()),
+		db.WithLogger(log),
+		db.WithDBType(dbType),
+		db.WithDBFile(dbFile))
+	dbc.Init()
+	if err := dbc.DB.Ping(); err != nil {
+		log.Fatal("Unable to ping the database")
 	}
 
-	// Initializing the server in a goroutine so that
-	// it won't block the graceful shutdown handling below
+	router = echo.New()
+	router.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:    true,
+		LogStatus: true,
+		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+			log.WithFields(logrus.Fields{
+				"URI":    values.URI,
+				"status": values.Status,
+			}).Info("request")
+
+			return nil
+		},
+	}))
+	router.Use(middleware.Recover())
+	addRoutes(dbc)
+
+	// Start server
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		if p, ok := os.LookupEnv("HTTP_LISTEN_PORT"); ok {
+			httpListenPort = p
+		}
+		if err := router.Start(fmt.Sprintf(":%s", httpListenPort)); err != nil && err.Error() != http.ErrServerClosed.Error() {
+			router.Logger.Fatal("shutting down the server")
 		}
 	}()
 
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(quit, os.Interrupt)
 	<-quit
-	log.Println("Server shutting down server ...")
-
-	// The context is used to inform the server it has 5 seconds to finish
-	// the request it is currently handling
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced shutdown", err)
+	if err := router.Shutdown(ctx); err != nil {
+		router.Logger.Fatal(err)
 	}
-
-	log.Println("Server Exiting")
 }
 
-func addRoutes() {
-	endpoints := routes.NewEndpoints()
-	endpoints.DB = db
-	v1 := router.Group("/v1/api")
+func addRoutes(dbc *db.Config) {
+	endpoints := routes.NewEndpoints(dbc)
+
+	v1 := router.Group("/api/v1")
 	{
-		//Health Endpoints accessible via /v1/api/health
+		//Health Endpoints accessible via /api/v1/health
 		health := v1.Group("/health")
 		{
 			health.GET("/live", endpoints.Live)
@@ -143,24 +124,5 @@ func addRoutes() {
 
 	// the default path to get swagger json is :8080/swagger/docs.json
 	// TODO enable/disable based on ENV variable
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-}
-
-func loadFruits() {
-	log.Println("Loading data into fruits table")
-	data := `
-DELETE FROM fruits;
-INSERT INTO fruits(name,season,emoji) VALUES ('Mango','Spring','U+1F96D');
-INSERT INTO fruits(name,season,emoji) VALUES ('Strawberry','Spring','U+1F353');
-INSERT INTO fruits(name,season,emoji) VALUES ('Orange','Winter','U+1F34A');
-INSERT INTO fruits(name,season,emoji) VALUES ('Lemon','Winter','U+1F34B');
-INSERT INTO fruits(name,season,emoji) VALUES ('Blueberry','Summer','U+1FAD0');
-INSERT INTO fruits(name,season,emoji) VALUES ('Banana','Summer','U+1F34C');
-INSERT INTO fruits(name,season,emoji) VALUES ('Watermelon','Summer','U+1F349');
-INSERT INTO fruits(name,season,emoji) VALUES ('Apple','Fall','U+1F34E');
-INSERT INTO fruits(name,season,emoji) VALUES ('Pear','Fall','U+1F350');
-`
-	if _, err = db.Exec(data); err != nil {
-		log.Fatalf("Error loading data into fruits table %s", err)
-	}
+	//router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

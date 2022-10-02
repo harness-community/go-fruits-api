@@ -13,17 +13,20 @@ steps:
     pull: if-not-exists
     commands:
       - golangci-lint run
+
   - name: test
     image: golang:1.18
     pull: if-not-exists
     commands:
       - go test ./... -v
     environment:
+      FRUITS_DB_TYPE: "pg"
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_PASSWORD: pa55Word!
       POSTGRES_USER: demo
       POSTGRES_DB: demodb
+
   - name: Build Binaries
     image: goreleaser/goreleaser
     pull: if-not-exists
@@ -31,6 +34,7 @@ steps:
       CGO_ENABLED: "0"
     commands:
       - goreleaser build --snapshot --rm-dist --debug
+
   - name: Publish Dev
     image: plugins/docker
     pull: if-not-exists
