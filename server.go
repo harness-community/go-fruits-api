@@ -4,21 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/gin-gonic/gin"
-	_ "github.com/kameshsampath/gloo-fruits-api/docs"
-	"github.com/kameshsampath/gloo-fruits-api/pkg/data"
-	"github.com/kameshsampath/gloo-fruits-api/pkg/routes"
+	_ "github.com/kameshsampath/go-fruits-api/docs"
+	"github.com/kameshsampath/go-fruits-api/pkg/data"
+	"github.com/kameshsampath/go-fruits-api/pkg/routes"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	// _ "github.com/mattn/go-sqlite3"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -39,7 +41,7 @@ var (
 // @description The Fruits API that defines few REST operations with Fruits used for demos
 
 // @contact.name Kamesh Sampath
-// @contact.email kamesh.sampath@solo.io
+// @contact.email kamesh.sampath@hotmail.com
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
@@ -85,16 +87,18 @@ func main() {
 	}
 	router = gin.Default()
 	addRoutes()
+	s, _ := time.ParseDuration("3s")
 	server := &http.Server{
-		Handler: router,
-		Addr:    fmt.Sprintf(":%s", httpListenPort),
+		Handler:           router,
+		ReadHeaderTimeout: s,
+		Addr:              fmt.Sprintf(":%s", httpListenPort),
 	}
 
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listent: %s\n", err)
+			log.Fatalf("listen: %s\n", err)
 		}
 	}()
 

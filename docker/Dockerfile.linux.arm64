@@ -1,0 +1,8 @@
+FROM scratch
+LABEL org.opencontainers.image.title="Fruits API" \
+   org.opencontainers.image.description="A simple Fruits API that is used to demostrate CI builds using Drone CI" \
+    org.opencontainers.image.vendor="Harness"
+
+COPY dist/server_linux_arm64/server /server
+
+CMD /server

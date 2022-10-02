@@ -19,7 +19,7 @@ emoji VARCHAR)`
 
 //Fruit model to hold the Fruit data
 type Fruit struct {
-	Id     int64  `json:"id,omitempty" from:"id" uri:"id"`
+	ID     int64  `json:"id,omitempty" from:"id" uri:"id"`
 	Name   string `json:"name" from:"name" uri:"name"`
 	Season string `json:"season" from:"season" uri:"season"`
 	Emoji  string `json:"emoji,omitempty" from:"emoji"`

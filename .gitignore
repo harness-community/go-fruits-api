@@ -38,3 +38,5 @@ hack/env/cmdline
 hack/env/envvars
 hack/env/extravars
 hack/project/.tool-versions
+.envrc.local
+dist/

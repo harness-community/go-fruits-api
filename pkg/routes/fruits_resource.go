@@ -3,12 +3,13 @@ package routes
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/kameshsampath/gloo-fruits-api/pkg/data"
-	"github.com/kameshsampath/gloo-fruits-api/pkg/utils"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/kameshsampath/go-fruits-api/pkg/data"
+	"github.com/kameshsampath/go-fruits-api/pkg/utils"
 )
 
 var (
@@ -30,52 +31,50 @@ func (e *Endpoints) AddFruit(c *gin.Context) {
 	if err = c.ShouldBind(&fruit); err != nil {
 		utils.NewError(c, http.StatusNotFound, err)
 		return
-	} else {
-		log.Printf("Saving Fruit %v", fruit)
-		if stmt, err := e.DB.Prepare(data.DMLINSERTFRUIT); err != nil {
+	}
+	log.Printf("Saving Fruit %v", fruit)
+	var stmt *sql.Stmt
+	var rows *sql.Rows
+	if stmt, err = e.DB.Prepare(data.DMLINSERTFRUIT); err != nil {
+		utils.NewError(c, http.StatusNotFound, err)
+		return
+	}
+	if fruit.Emoji == "" {
+		//default set some plant emoji
+		fruit.Emoji = "U+1F33F"
+	}
+	var tx *sql.Tx
+	if tx, err = e.DB.Begin(); err != nil {
+		utils.NewError(c, http.StatusNotFound, err)
+		return
+	}
+	if _, err := stmt.Exec(fruit.Name, fruit.Season, fruit.Emoji); err != nil {
+		utils.NewError(c, http.StatusNotFound, err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatalf("Unable to rollback transaction %s", err)
+		}
+		return
+	}
+	if rows, err = e.DB.Query(data.FRUITSIDSEQ); err != nil {
+		log.Printf("Unable to get the primary key %s, rolling back transaction", err)
+		utils.NewError(c, http.StatusNotFound, err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatalf("Unable to rollback transaction %s", err)
+		}
+		return
+	}
+	for rows.Next() {
+		if err = rows.Scan(&fruit.ID); err != nil {
 			utils.NewError(c, http.StatusNotFound, err)
+			if err = tx.Rollback(); err != nil {
+				log.Fatalf("Unable to rollback transaction %s", err)
+			}
 			return
-		} else {
-			if fruit.Emoji == "" {
-				//default set some plant emoji
-				fruit.Emoji = "U+1F33F"
-			}
-			if tx, err := e.DB.Begin(); err != nil {
-				utils.NewError(c, http.StatusNotFound, err)
-				return
-			} else {
-				if _, err := stmt.Exec(fruit.Name, fruit.Season, fruit.Emoji); err != nil {
-					utils.NewError(c, http.StatusNotFound, err)
-					if err = tx.Rollback(); err != nil {
-						log.Fatalf("Unable to rollback transaction %s", err)
-					}
-					return
-				} else {
-					if rows, err := e.DB.Query(data.FRUITSIDSEQ); err != nil {
-						log.Printf("Unable to get the primary key %s, rolling back transaction", err)
-						utils.NewError(c, http.StatusNotFound, err)
-						if err = tx.Rollback(); err != nil {
-							log.Fatalf("Unable to rollback transaction %s", err)
-						}
-						return
-					} else {
-						for rows.Next() {
-							if err = rows.Scan(&fruit.Id); err != nil {
-								utils.NewError(c, http.StatusNotFound, err)
-								if err = tx.Rollback(); err != nil {
-									log.Fatalf("Unable to rollback transaction %s", err)
-								}
-								return
-							}
-							log.Printf("Successfully saved, with id %d", fruit.Id)
-							c.JSON(http.StatusCreated, fruit)
-							if err := tx.Commit(); err != nil {
-								log.Fatalf("Unable to commit transaction %s", err)
-							}
-						}
-					}
-				}
-			}
+		}
+		log.Printf("Successfully saved, with id %d", fruit.ID)
+		c.JSON(http.StatusCreated, fruit)
+		if err := tx.Commit(); err != nil {
+			log.Fatalf("Unable to commit transaction %s", err)
 		}
 	}
 }
@@ -90,30 +89,29 @@ func (e *Endpoints) AddFruit(c *gin.Context) {
 //@Router /fruits/{fruit_id} [delete]
 func (e *Endpoints) DeleteFruit(c *gin.Context) {
 	id := c.Param("id")
-	if stmt, err := e.DB.Prepare(data.DMLFRUITBYID); err != nil {
+	var tx *sql.Tx
+	var stmt *sql.Stmt
+	if stmt, err = e.DB.Prepare(data.DMLFRUITBYID); err != nil {
 		log.Printf("Error deleting row %v, %s", stmt, err)
 		utils.NewError(c, http.StatusNotFound, err)
 		return
-	} else {
-		if tx, err := e.DB.Begin(); err != nil {
-			utils.NewError(c, http.StatusNotFound, err)
-			return
-		} else {
-			if _, err = stmt.Exec(id); err != nil {
-				log.Printf("Error deleting row %v, %s", stmt, err)
-				utils.NewError(c, http.StatusNotFound, err)
-				if err = tx.Rollback(); err != nil {
-					log.Fatalf("Unable to rollback transaction %s", err)
-				}
-				return
-			} else {
-				log.Printf("Successfully deleted fruit with id %s", id)
-				c.Writer.WriteHeader(http.StatusNoContent)
-				if err := tx.Commit(); err != nil {
-					log.Fatalf("Unable to commit transaction %s", err)
-				}
-			}
+	}
+	if tx, err = e.DB.Begin(); err != nil {
+		utils.NewError(c, http.StatusNotFound, err)
+		return
+	}
+	if _, err = stmt.Exec(id); err != nil {
+		log.Printf("Error deleting row %v, %s", stmt, err)
+		utils.NewError(c, http.StatusNotFound, err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatalf("Unable to rollback transaction %s", err)
 		}
+		return
+	}
+	log.Printf("Successfully deleted fruit with id %s", id)
+	c.Writer.WriteHeader(http.StatusNoContent)
+	if err := tx.Commit(); err != nil {
+		log.Fatalf("Unable to commit transaction %s", err)
 	}
 }
 
@@ -127,19 +125,19 @@ func (e *Endpoints) DeleteFruit(c *gin.Context) {
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/{fruit_name} [get]
 func (e *Endpoints) GetFruitsByName(c *gin.Context) {
+	var stmt *sql.Stmt
 	name := c.Param("name")
-	if stmt, err := e.DB.Prepare(data.DMLGETFRUITBYNAME); err != nil {
+	if stmt, err = e.DB.Prepare(data.DMLGETFRUITBYNAME); err != nil {
 		utils.NewError(c, http.StatusNotFound, err)
 		return
-	} else {
-		if rows, err := stmt.Query("%" + strings.ToLower(name) + "%"); err != nil {
-			utils.NewError(c, http.StatusNotFound, err)
-			return
-		} else {
-			fr := buildFruitsResponse(rows, err)
-			c.JSON(http.StatusOK, fr)
-		}
 	}
+	var rows *sql.Rows
+	if rows, err = stmt.Query("%" + strings.ToLower(name) + "%"); err != nil {
+		utils.NewError(c, http.StatusNotFound, err)
+		return
+	}
+	fr := buildFruitsResponse(rows, err)
+	c.JSON(http.StatusOK, fr)
 }
 
 // GetFruitsBySeason godoc
@@ -153,19 +151,19 @@ func (e *Endpoints) GetFruitsByName(c *gin.Context) {
 //@Router /fruits/season/{season} [get]
 func (e *Endpoints) GetFruitsBySeason(c *gin.Context) {
 	season := c.Param("season")
-	if stmt, err := e.DB.Prepare(data.DMLGETFRUITBYSEASON); err != nil {
+	var stmt *sql.Stmt
+	var rows *sql.Rows
+	if stmt, err = e.DB.Prepare(data.DMLGETFRUITBYSEASON); err != nil {
 		utils.NewError(c, http.StatusNotFound, err)
 		return
-	} else {
-		if rows, err := stmt.Query("%" + strings.ToLower(season) + "%"); err != nil {
-			utils.NewError(c, http.StatusNotFound, err)
-			return
-		} else {
-			fr := buildFruitsResponse(rows, err)
-			log.Printf("ROWS:%s", fr)
-			c.JSON(http.StatusOK, fr)
-		}
 	}
+	if rows, err = stmt.Query("%" + strings.ToLower(season) + "%"); err != nil {
+		utils.NewError(c, http.StatusNotFound, err)
+		return
+	}
+	fr := buildFruitsResponse(rows, err)
+	log.Printf("Rows:%v", fr)
+	c.JSON(http.StatusOK, fr)
 }
 
 // ListFruits godoc
@@ -177,29 +175,32 @@ func (e *Endpoints) GetFruitsBySeason(c *gin.Context) {
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits [get]
 func (e *Endpoints) ListFruits(c *gin.Context) {
+	var rows *sql.Rows
 	if err == nil {
-		if rows, err := e.DB.Query(data.DMLLISTFRUITS); err != nil {
+		if rows, err = e.DB.Query(data.DMLLISTFRUITS); err != nil {
 			utils.NewError(c, http.StatusNotFound, err)
 			return
-		} else {
-			fr := buildFruitsResponse(rows, err)
-			c.JSON(http.StatusOK, fr)
 		}
+		fr := buildFruitsResponse(rows, err)
+		c.JSON(http.StatusOK, fr)
 	} else {
 		c.JSON(http.StatusNotFound, fmt.Sprintf("API unavailable %s", err))
 	}
 }
 
 func buildFruitsResponse(rows *sql.Rows, err error) data.Fruits {
-	defer rows.Close()
-	var fr data.Fruits
-	for rows.Next() {
-		var f data.Fruit
-		if err = rows.Scan(&f.Id, &f.Name, &f.Season, &f.Emoji); err == nil {
-			fr = append(fr, f)
-		} else {
-			log.Fatalf("Error reading row %s", err)
+	if err != nil {
+		defer rows.Close()
+		var fr data.Fruits
+		for rows.Next() {
+			var f data.Fruit
+			if err := rows.Scan(&f.ID, &f.Name, &f.Season, &f.Emoji); err != nil {
+				log.Fatalf("Error reading row %s", err)
+			} else {
+				fr = append(fr, f)
+			}
 		}
+		return fr
 	}
-	return fr
+	return nil
 }

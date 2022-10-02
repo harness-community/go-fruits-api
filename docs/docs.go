@@ -20,7 +20,7 @@ var doc = `{
         "title": "{{.Title}}",
         "contact": {
             "name": "Kamesh Sampath",
-            "email": "kamesh.sampath@solo.io"
+            "email": "kamesh.sampath@hotmail.com"
         },
         "license": {
             "name": "Apache 2.0",

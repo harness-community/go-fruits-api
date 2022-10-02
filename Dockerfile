@@ -2,7 +2,7 @@
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
 FROM golang:1.16 as builder
-LABEL org.opencontainers.image.source=https://github.com/kameshsampath/gloo-fruits-api
+LABEL org.opencontainers.image.source=https://github.com/kameshsampath/go-fruits-api
 # Create and change to the app directory.
 WORKDIR /app
 # Retrieve application dependencies using go modules.
@@ -19,7 +19,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o fruits-api
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
 FROM alpine:3
 RUN apk add --no-cache ca-certificates
-LABEL org.opencontainers.image.source=https://github.com/kameshsampath/gloo-fruits-api
+LABEL org.opencontainers.image.source=https://github.com/kameshsampath/go-fruits-api
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/fruits-api /fruits-api
 # Run the web service on container startup.

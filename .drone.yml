@@ -1,0 +1,30 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+platform:
+  os: linux
+  arch: amd64 
+
+steps:
+  - name: test
+    image: golang:1.18
+    pull: if-not-exists
+    commands:
+      - go test ../... -v
+  - name: build
+    image: golang:1.18
+    pull: if-not-exists
+    commands:
+      - go build
+  - name: publish
+    image: plugins/docker:20.13
+    pull: if-not-exists
+    settings:
+      auto_tag: false
+      auto_tag_suffix: linux-arm64
+      tags: "latest" 
+      dockerfile: Dockerfile
+      insecure: true
+      dry_run: true
