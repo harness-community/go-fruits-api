@@ -14,13 +14,13 @@ import (
 )
 
 //AddFruit godoc
-// @Summary Add fruit to Database
+// @Summary Add a fruit to Database
 // @Description Adds a new Fruit to the Database
 // @Tags fruit
 // @Accept json
 // @Produce json
-// @Param message body data.Fruit true "Fruit object"
-// @Success 200 {object} data.Fruit
+// @Param message body db.Fruit true "Fruit object"
+// @Success 200 {object} db.Fruit
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/add [post]
 func (e *Endpoints) AddFruit(c echo.Context) error {
@@ -54,10 +54,10 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 // @Summary Delete a fruit from Database
 // @Description Deletes a Fruit to the Database
 // @Tags fruit
-// @Param fruit_id param path int true "Fruit ID"
+// @Param id path int true "Fruit ID"
 // @Success 204
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{fruit_id} [delete]
+//@Router /fruits/{id} [delete]
 func (e *Endpoints) DeleteFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
@@ -102,10 +102,10 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 // @Description Gets list of fruits by name
 // @Tags fruit
 // @Produce json
-// @Param fruit_name param path string true "Full or partial name of the fruit"
-// @Success 200 {object} data.Fruits
+// @Param name path string true "Full or partial name of the fruit"
+// @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{fruit_name} [get]
+//@Router /fruits/{name} [get]
 func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 	log := e.Config.Log
 	var name string
@@ -137,8 +137,8 @@ func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 // @Description Gets a list of fruits by season
 // @Tags fruit
 // @Produce json
-// @Param season param path string true "Full or partial name of the season"
-// @Success 200 {object} data.Fruits
+// @Param season path string true "Full or partial name of the season"
+// @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/season/{season} [get]
 func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
@@ -172,7 +172,7 @@ func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 // @Description Gets a list all available fruits from the database
 // @Tags fruit
 // @Produce json
-// @Success 200 {object} data.Fruits
+// @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits [get]
 func (e *Endpoints) ListFruits(c echo.Context) error {

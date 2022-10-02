@@ -1,6 +1,6 @@
-basePath: /v1/api
+basePath: /api/v1
 definitions:
-  data.Fruit:
+  db.Fruit:
     properties:
       emoji:
         type: string
@@ -23,7 +23,7 @@ definitions:
 host: localhost:8080
 info:
   contact:
-    email: kamesh.sampath@solo.io
+    email: kamesh.sampath@hotmail.com
     name: Kamesh Sampath
   description: The Fruits API that defines few REST operations with Fruits used for
     demos
@@ -43,7 +43,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/data.Fruit'
+              $ref: '#/definitions/db.Fruit'
             type: array
         "404":
           description: Not Found
@@ -52,18 +52,18 @@ paths:
       summary: Gets all fruits
       tags:
       - fruit
-  /fruits/{fruit_id}:
+  /fruits/{id}:
     delete:
       description: Deletes a Fruit to the Database
       parameters:
       - description: Fruit ID
         in: path
-        name: param
+        name: id
         required: true
         type: integer
       responses:
         "204":
-          description: ""
+          description: No Content
         "404":
           description: Not Found
           schema:
@@ -71,13 +71,13 @@ paths:
       summary: Delete a fruit from Database
       tags:
       - fruit
-  /fruits/{fruit_name}:
+  /fruits/{name}:
     get:
       description: Gets list of fruits by name
       parameters:
       - description: Full or partial name of the fruit
         in: path
-        name: param
+        name: name
         required: true
         type: string
       produces:
@@ -87,7 +87,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/data.Fruit'
+              $ref: '#/definitions/db.Fruit'
             type: array
         "404":
           description: Not Found
@@ -107,19 +107,19 @@ paths:
         name: message
         required: true
         schema:
-          $ref: '#/definitions/data.Fruit'
+          $ref: '#/definitions/db.Fruit'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.Fruit'
+            $ref: '#/definitions/db.Fruit'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/utils.HTTPError'
-      summary: Add fruit to Database
+      summary: Add a fruit to Database
       tags:
       - fruit
   /fruits/season/{season}:
@@ -128,7 +128,7 @@ paths:
       parameters:
       - description: Full or partial name of the season
         in: path
-        name: param
+        name: season
         required: true
         type: string
       produces:
@@ -138,7 +138,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/data.Fruit'
+              $ref: '#/definitions/db.Fruit'
             type: array
         "404":
           description: Not Found

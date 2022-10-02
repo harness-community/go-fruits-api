@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os/signal"
+	"path"
+	"strings"
 	"time"
 
 	_ "github.com/kameshsampath/go-fruits-api/docs"
@@ -16,11 +18,12 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
-	// _ "github.com/mattn/go-sqlite3"
-
 	"os"
 
-	_ "github.com/lib/pq"
+	echoSwagger "github.com/swaggo/echo-swagger"
+
+	_ "github.com/uptrace/bun"
+	"github.com/uptrace/bun/dbfixture"
 )
 
 var (
@@ -40,7 +43,7 @@ var (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host localhost:8080
-// @BasePath /v1/api
+// @BasePath /api/v1
 // @query.collection.format multi
 // @schemes http https
 func main() {
@@ -57,11 +60,21 @@ func main() {
 		db.WithDBType(dbType),
 		db.WithDBFile(dbFile))
 	dbc.Init()
+	//TODO wait for sometime before DB is available
 	if err := dbc.DB.Ping(); err != nil {
 		log.Fatal("Unable to ping the database")
 	}
+	fixtures := dbfixture.New(dbc.DB)
+	cwd, _ := os.Getwd()
+	if err := fixtures.Load(dbc.Ctx, os.DirFS(path.Join(cwd, "pkg", "data")), "data.yaml"); err != nil {
+		log.Warn("unable to preload the data")
+	}
 
 	router = echo.New()
+	ignoreSwaggerTrailingSlashConfig := middleware.TrailingSlashConfig{
+		Skipper: isSwaggerPath,
+	}
+	router.Pre(middleware.AddTrailingSlashWithConfig(ignoreSwaggerTrailingSlashConfig))
 	router.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,
@@ -117,12 +130,15 @@ func addRoutes(dbc *db.Config) {
 			fruits.POST("/add", endpoints.AddFruit)
 			fruits.GET("/", endpoints.ListFruits)
 			fruits.DELETE("/:id", endpoints.DeleteFruit)
-			fruits.GET(":name", endpoints.GetFruitsByName)
+			fruits.GET("/:name", endpoints.GetFruitsByName)
 			fruits.GET("/season/:season", endpoints.GetFruitsBySeason)
 		}
 	}
 
-	// the default path to get swagger json is :8080/swagger/docs.json
-	// TODO enable/disable based on ENV variable
-	//router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/swagger/*any", echoSwagger.WrapHandler)
+}
+
+func isSwaggerPath(c echo.Context) bool {
+	req := c.Request()
+	return strings.HasPrefix(req.RequestURI, "/swagger")
 }

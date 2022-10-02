@@ -18,7 +18,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/v1/api",
+    "basePath": "/api/v1",
     "paths": {
         "/fruits": {
             "get": {
@@ -36,7 +36,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.Fruit"
+                                "$ref": "#/definitions/db.Fruit"
                             }
                         }
                     },
@@ -61,7 +61,7 @@
                 "tags": [
                     "fruit"
                 ],
-                "summary": "Add fruit to Database",
+                "summary": "Add a fruit to Database",
                 "parameters": [
                     {
                         "description": "Fruit object",
@@ -69,7 +69,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/data.Fruit"
+                            "$ref": "#/definitions/db.Fruit"
                         }
                     }
                 ],
@@ -77,7 +77,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.Fruit"
+                            "$ref": "#/definitions/db.Fruit"
                         }
                     },
                     "404": {
@@ -103,7 +103,7 @@
                     {
                         "type": "string",
                         "description": "Full or partial name of the season",
-                        "name": "param",
+                        "name": "season",
                         "in": "path",
                         "required": true
                     }
@@ -114,7 +114,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.Fruit"
+                                "$ref": "#/definitions/db.Fruit"
                             }
                         }
                     },
@@ -127,7 +127,7 @@
                 }
             }
         },
-        "/fruits/{fruit_id}": {
+        "/fruits/{id}": {
             "delete": {
                 "description": "Deletes a Fruit to the Database",
                 "tags": [
@@ -138,14 +138,14 @@
                     {
                         "type": "integer",
                         "description": "Fruit ID",
-                        "name": "param",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "204": {
-                        "description": ""
+                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -156,7 +156,7 @@
                 }
             }
         },
-        "/fruits/{fruit_name}": {
+        "/fruits/{name}": {
             "get": {
                 "description": "Gets list of fruits by name",
                 "produces": [
@@ -170,7 +170,7 @@
                     {
                         "type": "string",
                         "description": "Full or partial name of the fruit",
-                        "name": "param",
+                        "name": "name",
                         "in": "path",
                         "required": true
                     }
@@ -181,7 +181,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/data.Fruit"
+                                "$ref": "#/definitions/db.Fruit"
                             }
                         }
                     },
@@ -236,7 +236,7 @@
         }
     },
     "definitions": {
-        "data.Fruit": {
+        "db.Fruit": {
             "type": "object",
             "properties": {
                 "emoji": {

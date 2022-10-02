@@ -41,3 +41,4 @@ hack/project/.tool-versions
 .envrc.local
 dist/
 **/test.db
+work

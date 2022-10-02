@@ -10,12 +10,13 @@ import (
 //Fruit model to hold the Fruit data
 type Fruit struct {
 	bun.BaseModel `bun:"table:fruits,alias:f"`
-	ID            int       `bun:",pk,autoincrement" json:"id"`
-	Name          string    `bun:",notnull" json:"name" `
-	Season        string    `bun:",notnull" json:"season"`
-	Emoji         string    `bun:"," json:"emoji,omitempty"`
-	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"-"`
-	ModifiedAt    time.Time `json:"-"`
+
+	ID         int       `bun:",pk,autoincrement" json:"id"`
+	Name       string    `bun:",notnull" json:"name" `
+	Season     string    `bun:",notnull" json:"season"`
+	Emoji      string    `bun:"," json:"emoji,omitempty"`
+	CreatedAt  time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"-"`
+	ModifiedAt time.Time `json:"-"`
 }
 
 //Fruits represents a collection of Fruits

@@ -66,5 +66,5 @@ kubectl port-forward
 Check if you are able to access the API, the following call should return you list of fruits as JSON,
 
 ```shell
-http localhost:8080/v1/api/fruits/
+http localhost:8080/v1/api/fruits
 ```

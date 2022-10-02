@@ -63,6 +63,7 @@ func WithDBType(dbType string) Option {
 		case "mysql":
 			c.DBType = dialect.MySQL
 		case "sqlite":
+			c.DBType = dialect.SQLite
 		default:
 			c.DBType = dialect.SQLite
 		}
