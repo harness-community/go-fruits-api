@@ -1,0 +1,220 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: fruits-app
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: fruits-api-sa
+  namespace: fruits-app
+---
+apiVersion: v1
+data:
+  data.yaml: |
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Mango','Spring','U+1F96D');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Strawberry','Spring','U+1F353');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Orange','Winter','U+1F34A');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Lemon','Winter','U+1F34B');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Blueberry','Summer','U+1FAD0');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Banana','Summer','U+1F34C');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Watermelon','Summer','U+1F349');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Apple','Fall','U+1F34E');
+    # INSERT INTO fruits(name,season,emoji) VALUES ('Pear','Fall','U+1F350');
+    - model: Fruit
+      rows:
+        - _id: mango
+          name: "Mango"
+          season: "Spring"
+          emoji: "U+1F96D"
+          created_at: "{{ now }}"
+        - _id: strawberry
+          name: "Strawberry"
+          season: "Spring"
+          emoji: "U+1F96D"
+          created_at: "{{ now }}"
+        - _id: orange
+          name: "Orange"
+          season: "Winter"
+          emoji: "U+1F34B"
+          created_at: "{{ now }}"
+        - _id: lemon
+          name: "Lemon"
+          season: "Winter"
+          emoji: "U+1F34A"
+          created_at: "{{ now }}"
+        - _id: blueberry
+          name: "Blueberry"
+          season: "Summer"
+          emoji: "U+1FAD0"
+          created_at: "{{ now }}"
+        - _id: banana
+          name: "Banana"
+          season: "Summer"
+          emoji: "U+1F34C"
+          created_at: "{{ now }}"
+        - _id: watermelon
+          name: "Watermelon"
+          season: "Summer"
+          emoji: "U+1F349"
+          created_at: "{{ now }}"
+        - _id: apple
+          name: "Apple"
+          season: "Fall"
+          emoji: "U+1F34E"
+          created_at: "{{ now }}"
+        - _id: pear
+          name: "Pear"
+          season: "Fall"
+          emoji: "U+1F350"
+          created_at: "{{ now }}"
+kind: ConfigMap
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: fruits-api-config-c9gt8k55d5
+  namespace: fruits-app
+---
+apiVersion: v1
+data:
+  database: ZGVtb2Ri
+  hostname: cG9zdGdyZXNxbC5kYi5zdmMuY2x1c3Rlci5sb2NhbA==
+  password: cGE1NVdvcmQh
+  port: NTQzMg==
+  username: ZGVtbw==
+kind: Secret
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: pgsql-credentials-b8775h5c9b
+  namespace: fruits-app
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: fruits-api
+  namespace: fruits-app
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: fruits-api
+    version: v1.0
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: fruits-db-pvc
+  namespace: fruits-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fruits-api
+    version: v1.0
+  name: fruits-api
+  namespace: fruits-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fruits-api
+      version: v1.0
+  template:
+    metadata:
+      labels:
+        app: fruits-api
+        version: v1.0
+      name: fruits-api
+    spec:
+      containers:
+        - args:
+            - -dataDir
+            - /config
+          env:
+            - name: FRUITS_DB_TYPE
+              value: pg
+            - name: LOG_LEVEL
+              value: info
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: hostname
+                  name: pgsql-credentials-b8775h5c9b
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: port
+                  name: pgsql-credentials-b8775h5c9b
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: pgsql-credentials-b8775h5c9b
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: pgsql-credentials-b8775h5c9b
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: database
+                  name: pgsql-credentials-b8775h5c9b
+          image: ${FRUITS_API_IMAGE}
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: 8080
+          name: fruits-api
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: 8080
+          resources:
+            limits:
+              cpu: 100m
+              memory: 200Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /data/db
+              name: fruits-db-dir
+            - mountPath: /config
+              name: fruits-api-config
+      restartPolicy: Always
+      serviceAccountName: fruits-api-sa
+      volumes:
+        - name: fruits-db-dir
+          persistentVolumeClaim:
+            claimName: fruits-db-pvc
+        - configMap:
+            name: fruits-api-config-c9gt8k55d5
+          name: fruits-api-config
