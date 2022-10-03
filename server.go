@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"os/signal"
+	"path"
 	"time"
 
 	_ "github.com/kameshsampath/go-fruits-api/docs"
@@ -61,11 +63,21 @@ func main() {
 		db.WithDBFile(dbFile))
 	dbc.Init()
 
-	fixtures := dbfixture.New(dbc.DB)
-	if dataDir != "" {
+	//marker file to ensure we don't preload the data again on each
+	//update of the application
+	_, err := os.Stat(path.Join("/data", "db", ".loaded"))
+	if dataDir != "" && errors.Is(err, os.ErrNotExist) {
+		log.Info("Attempting to preload data")
+		fixtures := dbfixture.New(dbc.DB, dbfixture.WithTruncateTables())
 		if err := fixtures.Load(dbc.Ctx, os.DirFS(dataDir), "data.yaml"); err != nil {
-			log.Warn("unable to preload the data")
+			log.Warnf("unable to preload the data,%v", err)
 		}
+		_, err := os.Create(path.Join("/data", "db", ".loaded"))
+		if err != nil {
+			log.Errorf("Error creating marker file %v", err)
+		}
+	} else {
+		log.Info("Data already loaded, skipping preload.")
 	}
 
 	router = echo.New()
@@ -77,7 +89,7 @@ func main() {
 			log.WithFields(logrus.Fields{
 				"URI":    values.URI,
 				"status": values.Status,
-			}).Info("request")
+			}).Debug("request")
 
 			return nil
 		},

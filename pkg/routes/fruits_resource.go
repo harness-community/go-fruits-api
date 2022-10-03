@@ -44,6 +44,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 	if err != nil {
 		log.Errorf("Error adding fruit %v, %v", f, err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
 	}
 	log.Infof("Fruit %s successfully saved", f)
 	c.JSON(http.StatusCreated, f)
