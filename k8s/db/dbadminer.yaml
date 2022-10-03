@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbadminer
+spec:
+  selector:
+    matchLabels:
+      app: dbadminer
+  template:
+    metadata:
+      labels:
+        app: dbadminer
+    spec:
+      containers:
+      - name: dbadminer
+        image: adminer
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080

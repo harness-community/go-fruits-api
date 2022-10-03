@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os/signal"
-	"path"
-	"strings"
 	"time"
 
 	_ "github.com/kameshsampath/go-fruits-api/docs"
@@ -43,41 +41,38 @@ var (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host localhost:8080
-// @BasePath /api/v1
+// @BasePath /api
 // @query.collection.format multi
 // @schemes http https
 func main() {
-	var v, dbType, dbFile string
-	flag.StringVar(&dbType, "dbtype", utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite"), "The database to use. Valid values are sqlite, pg, mysql")
+	var v, dbType, dbFile, dataDir string
+	flag.StringVar(&dbType, "dbType", utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite"), "The database to use. Valid values are sqlite, pg, mysql")
 	flag.StringVar(&dbFile, "dbPath", utils.LookupEnvOrString("FRUITS_DB_FILE", "/data/db"), "Sqlite DB file")
+	flag.StringVar(&dataDir, "dataDir", "", "The data dir that will have the 'data.yaml' that will be loaded on to the Fruits table.")
 	flag.StringVar(&v, "level", utils.LookupEnvOrString("LOG_LEVEL", logrus.InfoLevel.String()), "The log level to use. Allowed values trace,debug,info,warn,fatal,panic.")
 	flag.Parse()
 
+	ctx := context.Background()
 	log = utils.LogSetup(os.Stdout, v)
 	dbc := db.New(
-		db.WithContext(context.Background()),
+		db.WithContext(ctx),
 		db.WithLogger(log),
 		db.WithDBType(dbType),
 		db.WithDBFile(dbFile))
 	dbc.Init()
-	//TODO wait for sometime before DB is available
-	if err := dbc.DB.Ping(); err != nil {
-		log.Fatal("Unable to ping the database")
-	}
+
 	fixtures := dbfixture.New(dbc.DB)
-	cwd, _ := os.Getwd()
-	if err := fixtures.Load(dbc.Ctx, os.DirFS(path.Join(cwd, "pkg", "data")), "data.yaml"); err != nil {
-		log.Warn("unable to preload the data")
+	if dataDir != "" {
+		if err := fixtures.Load(dbc.Ctx, os.DirFS(dataDir), "data.yaml"); err != nil {
+			log.Warn("unable to preload the data")
+		}
 	}
 
 	router = echo.New()
-	ignoreSwaggerTrailingSlashConfig := middleware.TrailingSlashConfig{
-		Skipper: isSwaggerPath,
-	}
-	router.Pre(middleware.AddTrailingSlashWithConfig(ignoreSwaggerTrailingSlashConfig))
 	router.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,
+		LogError:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
 			log.WithFields(logrus.Fields{
 				"URI":    values.URI,
@@ -115,20 +110,22 @@ func main() {
 func addRoutes(dbc *db.Config) {
 	endpoints := routes.NewEndpoints(dbc)
 
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api")
 	{
-		//Health Endpoints accessible via /api/v1/health
+		//Health Endpoints accessible via /api/health
 		health := v1.Group("/health")
 		{
 			health.GET("/live", endpoints.Live)
 			health.GET("/ready", endpoints.Ready)
 		}
 
-		//Fruits API endpoints
+		//Fruits API endpoints /api/fruits
 		fruits := v1.Group("/fruits")
 		{
 			fruits.POST("/add", endpoints.AddFruit)
 			fruits.GET("/", endpoints.ListFruits)
+			//aliases for list
+			fruits.GET("/all", endpoints.ListFruits)
 			fruits.DELETE("/:id", endpoints.DeleteFruit)
 			fruits.GET("/:name", endpoints.GetFruitsByName)
 			fruits.GET("/season/:season", endpoints.GetFruitsBySeason)
@@ -136,9 +133,4 @@ func addRoutes(dbc *db.Config) {
 	}
 
 	router.GET("/swagger/*any", echoSwagger.WrapHandler)
-}
-
-func isSwaggerPath(c echo.Context) bool {
-	req := c.Request()
-	return strings.HasPrefix(req.RequestURI, "/swagger")
 }

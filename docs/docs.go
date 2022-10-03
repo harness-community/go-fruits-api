@@ -197,7 +197,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/health/live": {
+        "/health/live/": {
             "get": {
                 "description": "Checks the API liveness, can be used with Kubernetes Probes",
                 "produces": [
@@ -217,7 +217,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/health/ready": {
+        "/health/ready/": {
             "get": {
                 "description": "Checks the API readiness, can be used with Kubernetes Probes",
                 "produces": [
@@ -276,7 +276,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/api",
 	Schemes:          []string{"http", "https"},
 	Title:            "Fruits API",
 	Description:      "The Fruits API that defines few REST operations with Fruits used for demos",

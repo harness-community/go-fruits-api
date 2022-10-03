@@ -15,13 +15,21 @@ spec:
         - name: fruits-db-dir
           persistentVolumeClaim:
             claimName: fruits-db-pvc
+        - name: fruits-api-config
+          configMap:
+            name: fruits-api-config
       containers:
         - name: fruits-api
           image: ko://github.com/kameshsampath/go-fruits-api
+          args:
+            - -dataDir
+            - /config
           imagePullPolicy: Always
           env:
-            - name: GIN_MODE
-              value: "release"
+            - name: FRUITS_DB_TYPE
+              value: "pg"
+            - name: LOG_LEVEL
+              value: "info"
             - name: POSTGRES_HOST
               valueFrom:
                 secretKeyRef:
@@ -50,11 +58,11 @@ spec:
           livenessProbe:
             httpGet:
               port: 8080
-              path: /v1/api/health/live
+              path: /api/health/live
           readinessProbe:
             httpGet:
               port: 8080
-              path: /v1/api/health/ready
+              path: /api/health/ready
           resources:
             limits:
               cpu: "100m"
@@ -63,10 +71,12 @@ spec:
               cpu: "50m"
               memory: "100Mi"
           volumeMounts:
-            - mountPath: /fruits-db
+            - mountPath: /data/db
               name: fruits-db-dir
+            - mountPath: /config
+              name: fruits-api-config
       restartPolicy: Always
-      serviceAccountName: cmd-sa
+      serviceAccountName: fruits-api-sa
   selector:
     matchLabels:
       app: fruits-api

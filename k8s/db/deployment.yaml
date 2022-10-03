@@ -18,7 +18,7 @@ spec:
             claimName: pgdata-pvc
       containers:
         - name: postgresql
-          image: postgres:13.2-alpine
+          image: postgres:14.4-alpine
           imagePullPolicy: IfNotPresent
           env:
             - name: POSTGRES_PASSWORD

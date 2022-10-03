@@ -64,37 +64,65 @@ func TestAddFruit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var requestBody = `
-{
-"id": 10,
-"name": "Test Fruit",
-"season": "Summer"
-}
-`
-	var want, got db.Fruit
-	json.Unmarshal([]byte(requestBody), &want)
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/fruits/add", strings.NewReader(requestBody))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	ep := &Endpoints{
-		Config: dbc,
+	testCases := map[string]struct {
+		requestBody string
+		statusCode  int
+		want        db.Fruit
+	}{
+		"withId": {
+			requestBody: `{
+        "id": 10,
+        "name": "Test Fruit",
+        "season": "Summer"
+        }`,
+			statusCode: http.StatusCreated,
+			want: db.Fruit{
+				ID:     10,
+				Name:   "Test Fruit",
+				Season: "Summer",
+			},
+		},
+		"withoutId": {
+			requestBody: `{
+        "name": "Test Fruit 2",
+        "season": "Spring"
+        }`,
+			statusCode: http.StatusCreated,
+			want: db.Fruit{
+				ID:     11,
+				Name:   "Test Fruit 2",
+				Season: "Spring",
+			},
+		},
 	}
-	if c := e.NewContext(req, rec); assert.NoError(t, ep.AddFruit(c)) {
-		assert.Equal(t, http.StatusCreated, rec.Code)
-		dbConn := ep.Config.DB
-		ctx := context.TODO()
-		err := dbConn.NewSelect().
-			Model(&got).
-			Where("name = 'Test Fruit'").
-			Scan(ctx)
-		if err != nil {
-			t.Fatal(err)
-		}
-		//Verify Fruit
-		if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(db.Fruit{}, "CreatedAt", "ModifiedAt")); diff != "" {
-			t.Errorf("AddFruit() mismatch (-want +got):\n%s", diff)
-		}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var got db.Fruit
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/fruits/add", strings.NewReader(tc.requestBody))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			ep := &Endpoints{
+				Config: dbc,
+			}
+			if c := e.NewContext(req, rec); assert.NoError(t, ep.AddFruit(c)) {
+				assert.Equal(t, tc.statusCode, rec.Code)
+				dbConn := ep.Config.DB
+				ctx := context.TODO()
+				err := dbConn.NewSelect().
+					Model(&got).
+					Where("name = ?", tc.want.Name).
+					Scan(ctx)
+				if err != nil {
+					t.Fatal(err)
+				}
+				//Verify Fruit
+				if diff := cmp.Diff(tc.want, got, cmpopts.IgnoreFields(db.Fruit{}, "CreatedAt", "ModifiedAt")); diff != "" {
+					t.Errorf("AddFruit() mismatch (-want +got):\n%s", diff)
+				}
+			}
+		})
 	}
 }
 
@@ -105,11 +133,11 @@ func TestDeleteFruit(t *testing.T) {
 		t.Fatal(err)
 	}
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/fruits/:id", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/fruits/:id", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath("/api/v1/fruits/:id")
+	c.SetPath("/api/fruits/:id")
 	c.SetParamNames("id")
 	c.SetParamValues(fruitID)
 	ep := &Endpoints{
@@ -188,11 +216,11 @@ func TestGetFruitByName(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/fruits/:name", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/fruits/:name", nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/api/v1/fruits/:name")
+			c.SetPath("/api/fruits/:name")
 			c.SetParamNames("name")
 			c.SetParamValues(tc.name)
 			ep := &Endpoints{
@@ -321,11 +349,11 @@ func TestGetFruitsBySeason(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/fruits/:season", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/fruits/:season", nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/api/v1/fruits/:season")
+			c.SetPath("/api/fruits/:season")
 			c.SetParamNames("season")
 			c.SetParamValues(tc.season)
 			ep := &Endpoints{
@@ -355,7 +383,7 @@ func TestGetAllFruits(t *testing.T) {
 		t.Fatal(err)
 	}
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/fruits", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/fruits", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	ep := &Endpoints{

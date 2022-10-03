@@ -31,7 +31,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 	if err := c.Bind(f); err != nil {
 		return err
 	}
-	log.Infof("Adding Fruit %#v", f)
+	log.Infof("Adding Fruit %s", f)
 	err := dbConn.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		_, err := dbConn.NewInsert().
 			Model(f).
@@ -45,7 +45,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 		log.Errorf("Error adding fruit %v, %v", f, err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
 	}
-	log.Infof("Fruit %#v successfully saved", f)
+	log.Infof("Fruit %s successfully saved", f)
 	c.JSON(http.StatusCreated, f)
 	return nil
 }

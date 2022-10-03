@@ -22,9 +22,9 @@ func LogSetup(out io.Writer, level string) *logrus.Logger {
 			FullTimestamp:   true,
 			TimestampFormat: "2006-01-02 15:15:10",
 		},
-		Out:          out,
-		ReportCaller: true,
-		Level:        lvl,
+		Out: out,
+		//ReportCaller: true,
+		Level: lvl,
 	}
 
 	return log

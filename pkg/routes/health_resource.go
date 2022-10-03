@@ -12,12 +12,9 @@ import (
 // @Tags health
 // @Produce json
 // @Success 200 {object} string
-// @Router /health/live [get]
+// @Router /health/live/ [get]
 func (e *Endpoints) Live(c echo.Context) error {
-	if err := e.Config.DB.Ping(); err == nil {
-		c.JSON(http.StatusOK, "live")
-	}
-	c.JSON(http.StatusNotFound, "dead")
+	c.JSON(http.StatusOK, "OK")
 	return nil
 }
 
@@ -27,11 +24,13 @@ func (e *Endpoints) Live(c echo.Context) error {
 // @Tags health
 // @Produce json
 // @Success 200 {object} string
-// @Router /health/ready [get]
+// @Router /health/ready/ [get]
 func (e *Endpoints) Ready(c echo.Context) error {
-	if err := e.Config.DB.Ping(); err == nil {
-		c.JSON(http.StatusOK, "ready")
+	var err error
+	if err = e.Config.DB.Ping(); err == nil {
+		c.JSON(http.StatusOK, "READY")
+		return nil
 	}
-	c.JSON(http.StatusNotFound, "not ready")
-	return nil
+	c.JSON(http.StatusNotFound, "YDAER")
+	return err
 }

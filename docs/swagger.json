@@ -18,7 +18,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/api/v1",
+    "basePath": "/api",
     "paths": {
         "/fruits": {
             "get": {
@@ -194,7 +194,7 @@
                 }
             }
         },
-        "/health/live": {
+        "/health/live/": {
             "get": {
                 "description": "Checks the API liveness, can be used with Kubernetes Probes",
                 "produces": [
@@ -214,7 +214,7 @@
                 }
             }
         },
-        "/health/ready": {
+        "/health/ready/": {
             "get": {
                 "description": "Checks the API readiness, can be used with Kubernetes Probes",
                 "produces": [

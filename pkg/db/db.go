@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -88,8 +90,8 @@ func (c *Config) Init() *bun.DB {
 		var db *bun.DB
 		switch c.DBType {
 		case dialect.PG:
-			dsn := buildPGDSN()
-			sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+			pgConn := buildPGConnector()
+			sqldb := sql.OpenDB(pgConn)
 			db = bun.NewDB(sqldb, pgdialect.New())
 		case dialect.MySQL:
 			sqldb, err := sql.Open("mysql", buildMYSQLDSN())
@@ -109,12 +111,12 @@ func (c *Config) Init() *bun.DB {
 			log.Fatal(err)
 		}
 
-		log.Info("Connected to the database")
 		isVerbose := log.Level == logrus.DebugLevel || log.Level == logrus.TraceLevel
 		db.AddQueryHook(bundebug.NewQueryHook(
 			bundebug.WithVerbose(isVerbose),
 			bundebug.WithVerbose(isVerbose),
 		))
+
 		c.DB = db
 
 		//Setup Schema
@@ -137,7 +139,7 @@ func (c *Config) createTables() error {
 	return nil
 }
 
-func buildPGDSN() string {
+func buildPGConnector() *pgdriver.Connector {
 	var (
 		pgHost     = "localhost"
 		pgPort     = "5432"
@@ -162,10 +164,26 @@ func buildPGDSN() string {
 		pgDatabase = d
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		pgUser, pgPassword, pgHost, pgPort, pgDatabase)
+	pgConn := pgdriver.NewConnector(
+		pgdriver.WithNetwork("tcp"),
+		pgdriver.WithAddr(fmt.Sprintf("%s:%s", pgHost, pgPort)),
+		pgdriver.WithPassword(pgPassword),
+		pgdriver.WithUser(pgUser),
+		pgdriver.WithDatabase(pgDatabase),
+		pgdriver.WithTLSConfig(nil),
+		pgdriver.WithTimeout(5*time.Second),
+		pgdriver.WithDialTimeout(5*time.Second),
+		pgdriver.WithReadTimeout(5*time.Second),
+		pgdriver.WithWriteTimeout(5*time.Second),
+		pgdriver.WithApplicationName("fruits-api"),
+	)
+
+	log.Infof("PostgresSQL Address %s", pgConn.Config().Addr)
+
+	return pgConn
 }
 
+//TODO build the connector
 func buildMYSQLDSN() string {
 	var (
 		mySQLHost     = "localhost"

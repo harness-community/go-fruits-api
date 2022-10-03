@@ -8,13 +8,16 @@ secretGenerator:
       - username=demo
       - password=pa55Word!
       - database=demodb
-      - hostname=postgresql.db.svc
+      - hostname=postgresql.db.svc.cluster.local
       - port=5432
-generatorOptions:
-  disableNameSuffixHash: true
+configMapGenerator:
+  - name: fruits-api-config
+    files:
+      - data.yaml
 resources:
   - namespace.yaml
-  - deployment.yaml
   - pvc.yaml
-  - service.yaml
   - rbac.yaml
+  - deployment.yaml
+  - service.yaml
+ 

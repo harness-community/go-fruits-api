@@ -1,4 +1,4 @@
-#INSERT INTO fruits(name,season,emoji) VALUES ('Mango','Spring','U+1F96D');
+# INSERT INTO fruits(name,season,emoji) VALUES ('Mango','Spring','U+1F96D');
 # INSERT INTO fruits(name,season,emoji) VALUES ('Strawberry','Spring','U+1F353');
 # INSERT INTO fruits(name,season,emoji) VALUES ('Orange','Winter','U+1F34A');
 # INSERT INTO fruits(name,season,emoji) VALUES ('Lemon','Winter','U+1F34B');

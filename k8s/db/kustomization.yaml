@@ -7,10 +7,12 @@ secretGenerator:
       - username=demo
       - password=pa55Word!
       - database=demodb
-      - hostname=postgresql.db.svc.local
+      - hostname=postgresql.db.svc.cluster.local
       - port=5432
 resources:
   - namespace.yaml
-  - deployment.yaml
   - pvc.yaml
+  - deployment.yaml
+  - dbadminer.yaml
   - service.yaml
+  - dbadminer-service.yaml

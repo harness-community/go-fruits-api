@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /api
 definitions:
   db.Fruit:
     properties:
@@ -147,7 +147,7 @@ paths:
       summary: Gets fruits by season
       tags:
       - fruit
-  /health/live:
+  /health/live/:
     get:
       description: Checks the API liveness, can be used with Kubernetes Probes
       produces:
@@ -160,7 +160,7 @@ paths:
       summary: Checks the API liveness
       tags:
       - health
-  /health/ready:
+  /health/ready/:
     get:
       description: Checks the API readiness, can be used with Kubernetes Probes
       produces:

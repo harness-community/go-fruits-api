@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -37,4 +38,8 @@ func (f Fruits) Less(i int, j int) bool {
 // Swap implements sort.Interface
 func (f Fruits) Swap(i int, j int) {
 	f[i], f[j] = f[j], f[i]
+}
+
+func (f Fruit) String() string {
+	return fmt.Sprintf("ID: %d, Name: %s, Season: %s", f.ID, f.Name, f.Season)
 }
