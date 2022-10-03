@@ -1,7 +1,7 @@
 ---
 kind: pipeline
 type: docker
-name: default
+name: "Build and Release"
 
 platform:
   os: linux
@@ -41,8 +41,13 @@ steps:
       auto_tag: true
       auto_tag_suffix: linux-amd64
       dockerfile: docker/Dockerfile.linux.amd64
-      registry: "localhost:5001/example/go-fruits-api"
-
+      registry: 
+        # "localhost:5001/example/go-fruits-api"
+        from_secret: registry 
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 services:
   - name: postgres
     image: postgres:14.4-alpine
@@ -51,3 +56,31 @@ services:
       POSTGRES_PASSWORD: pa55Word!
       POSTGRES_USER: demo
       POSTGRES_DB: demodb
+---
+kind: pipeline
+type: docker
+name: "Publish Manifest"
+
+depends_on:
+  - "Build and Release"
+
+trigger:
+  branch:
+    - main
+  event:
+    - tag
+    - push
+
+steps:
+  - name: Publish Manifests
+    image: plugins/manifest:1.2
+    settings:
+      auto_tag: true
+      insecure: true
+      ignore_missing: true
+      spec: docker/manifest.tmpl
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+
