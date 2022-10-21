@@ -42,3 +42,5 @@ hack/project/.tool-versions
 dist/
 **/test.db
 work
+.env*
+!.env.example

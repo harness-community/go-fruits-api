@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"os/signal"
-	"path"
 	"time"
 
 	_ "github.com/kameshsampath/go-fruits-api/docs"
@@ -23,7 +21,6 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 
 	_ "github.com/uptrace/bun"
-	"github.com/uptrace/bun/dbfixture"
 )
 
 var (
@@ -47,39 +44,25 @@ var (
 // @query.collection.format multi
 // @schemes http https
 func main() {
-	var v, dbType, dbFile, dataDir string
-	flag.StringVar(&dbType, "dbType", utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite"), "The database to use. Valid values are sqlite, pg, mysql")
-	flag.StringVar(&dbFile, "dbPath", utils.LookupEnvOrString("FRUITS_DB_FILE", "/data/db"), "Sqlite DB file")
-	flag.StringVar(&dataDir, "dataDir", "", "The data dir that will have the 'data.yaml' that will be loaded on to the Fruits table.")
+	var v, uri, dbName, dbCollection string
+	flag.StringVar(&uri, "dbConnectionString", utils.LookupEnvOrString("QUARKUS_MONGODB_CONNECTION_STRING", ""), "The mongodb database connection string.")
+	flag.StringVar(&dbName, "dbName", utils.LookupEnvOrString("FRUITS_DB", "demodb"), "The database to use.")
+	flag.StringVar(&dbCollection, "dbCollectionName", utils.LookupEnvOrString("FRUITS_DB_COLLECTION", "fruits"), "The Fruits collection in Database")
 	flag.StringVar(&v, "level", utils.LookupEnvOrString("LOG_LEVEL", logrus.InfoLevel.String()), "The log level to use. Allowed values trace,debug,info,warn,fatal,panic.")
 	flag.Parse()
 
-	ctx := context.Background()
 	log = utils.LogSetup(os.Stdout, v)
-	dbc := db.New(
+	ctx := context.Background()
+	dbc := db.New(uri,
 		db.WithContext(ctx),
+		db.WithDB(dbName),
 		db.WithLogger(log),
-		db.WithDBType(dbType),
-		db.WithDBFile(dbFile))
-	dbc.Init()
+		db.WithCollection(dbCollection))
+	err := dbc.Init()
 
-	//marker file to ensure we don't preload the data again on each
-	//update of the application
-	_, err := os.Stat(path.Join("/data", "db", ".loaded"))
-	if dataDir != "" && errors.Is(err, os.ErrNotExist) {
-		log.Info("Attempting to preload data")
-		fixtures := dbfixture.New(dbc.DB, dbfixture.WithTruncateTables())
-		if err := fixtures.Load(dbc.Ctx, os.DirFS(dataDir), "data.yaml"); err != nil {
-			log.Warnf("unable to preload the data,%v", err)
-		}
-		_, err := os.Create(path.Join("/data", "db", ".loaded"))
-		if err != nil {
-			log.Errorf("Error creating marker file %v", err)
-		}
-	} else {
-		log.Info("Data already loaded, skipping preload.")
+	if err != nil {
+		log.Fatal(err)
 	}
-
 	router = echo.New()
 	router.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
@@ -114,6 +97,7 @@ func main() {
 	<-quit
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	defer dbc.Client.Disconnect(ctx)
 	if err := router.Shutdown(ctx); err != nil {
 		router.Logger.Fatal(err)
 	}
@@ -136,10 +120,8 @@ func addRoutes(dbc *db.Config) {
 		{
 			fruits.POST("/add", endpoints.AddFruit)
 			fruits.GET("/", endpoints.ListFruits)
-			//aliases for list
-			fruits.GET("/all", endpoints.ListFruits)
 			fruits.DELETE("/:id", endpoints.DeleteFruit)
-			fruits.GET("/:name", endpoints.GetFruitsByName)
+			fruits.GET("/search/:name", endpoints.GetFruitsByName)
 			fruits.GET("/season/:season", endpoints.GetFruitsBySeason)
 		}
 	}

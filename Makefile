@@ -6,14 +6,10 @@ TEST_LOG_LEVEL ?= "info"
 swaggo:	## Generate Swagger OpenAPI docs
 	@swag  init --parseDependency --parseInternal -g server.go
 
-test:	start-db	## Runs test
-	rm -f pkg/db/testdata/test.db pkg/routes/testdata/test.db
-	go clean -testcache
-	go test ./... -v
-	@docker-compose -f $(compose_file) down
-	rm -f pkg/db/testdata/test.db pkg/routes/testdata/test.db
+test:	## Runs test
+	@drone exec --trusted --env-file=.env --include=test --include=mongodb
 
-start-db:	## Starts the docker containers usig docker-compose
+start-db:	## Starts the docker containers using docker-compose
 	@docker-compose -f $(compose_file) up -d
 
 clean:	## Cleans output
@@ -24,13 +20,15 @@ vendor:	## Vendoring
 	go mod vendor
 
 lint:	## Run lint on the project
-	@golangci-lint run
+	@drone exec --trusted --include=lint --env-file=.env
 
 ko: ## Dev deployment using ko
 	kustomize build config/app | ko resolve --platform=linux/arm64 -f - | kubectl apply -f -
 
 manifests:	## Generates application deployment manifests
-	
+
+build-push-image:	## Builds Container Image
+	@drone exec --env-file=.env
 
 help: ## Show this help
 	@echo Please specify a build target. The choices are:

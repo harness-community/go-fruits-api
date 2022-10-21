@@ -14,8 +14,7 @@ import (
 // @Success 200 {object} string
 // @Router /health/live/ [get]
 func (e *Endpoints) Live(c echo.Context) error {
-	c.JSON(http.StatusOK, "OK")
-	return nil
+	return c.JSON(http.StatusOK, "OK")
 }
 
 // Ready godoc
@@ -27,10 +26,8 @@ func (e *Endpoints) Live(c echo.Context) error {
 // @Router /health/ready/ [get]
 func (e *Endpoints) Ready(c echo.Context) error {
 	var err error
-	if err = e.Config.DB.Ping(); err == nil {
-		c.JSON(http.StatusOK, "READY")
-		return nil
+	if err = e.Config.Client.Ping(e.Config.Ctx, nil); err == nil {
+		return c.JSON(http.StatusOK, "READY")
 	}
-	c.JSON(http.StatusNotFound, "YDAER")
 	return err
 }

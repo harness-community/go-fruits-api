@@ -1,3 +1,8 @@
+project_name: fruits-api
+#before:
+#  hooks:
+#    - go mod tidy
+#    - go mod vendor
 builds:
   - id: server
     main: server.go
@@ -12,7 +17,7 @@ builds:
     flags:
       - -mod=vendor
     ldflags:
-      - -s -w -X main.build={{.Version}}
+      - '-s -w -X main.build={{.Version}} -extldflags "-static"'
     goarch:
       - amd64
       - arm64

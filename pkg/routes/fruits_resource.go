@@ -1,16 +1,14 @@
 package routes
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
-	"net/http"
-	"strings"
-
 	"github.com/kameshsampath/go-fruits-api/pkg/db"
 	"github.com/kameshsampath/go-fruits-api/pkg/utils"
 	"github.com/labstack/echo/v4"
-	"github.com/uptrace/bun"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http"
 )
 
 //AddFruit godoc
@@ -26,29 +24,22 @@ import (
 func (e *Endpoints) AddFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
-	dbConn := e.Config.DB
+	database := e.Config.DB
+
 	f := &db.Fruit{}
 	if err := c.Bind(f); err != nil {
 		return err
 	}
 	log.Infof("Adding Fruit %s", f)
-	err := dbConn.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		_, err := dbConn.NewInsert().
-			Model(f).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	r, err := database.Collection(e.Config.Collection).InsertOne(ctx, f)
 	if err != nil {
 		log.Errorf("Error adding fruit %v, %v", f, err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
 		return err
 	}
+	f.ID = r.InsertedID
 	log.Infof("Fruit %s successfully saved", f)
-	c.JSON(http.StatusCreated, f)
-	return nil
+	return c.JSON(http.StatusCreated, f)
 }
 
 // DeleteFruit godoc
@@ -62,40 +53,28 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 func (e *Endpoints) DeleteFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
-	dbConn := e.Config.DB
-	var ID int
+	database := e.Config.DB
+	var ID string
 	if err := echo.PathParamsBinder(c).
-		Int("id", &ID).
+		String("id", &ID).
 		BindError(); err != nil {
 		return err
 	}
-	if ID == 0 {
-		err := fmt.Errorf("fruit with id %d not found", ID)
+	if ID == "" {
+		err := fmt.Errorf("fruit with id %s not found", ID)
 		utils.NewHTTPError(c, http.StatusNotFound, err)
 		return err
 	}
-	f := &db.Fruit{
-		ID: ID,
-	}
-	log.Infof("Deleting Fruit with id %d", ID)
-	err := dbConn.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		_, err := dbConn.NewDelete().
-			Model(f).
-			WherePK().
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	f := bson.D{{"_id", ID}} //nolint:govet
+	log.Infof("Deleting Fruit with id %s", ID)
+	_, err := database.Collection(e.Config.Collection).DeleteOne(ctx, f)
 	if err != nil {
-		log.Errorf("Error deleting fruit with ID %d, %v", ID, err)
+		log.Errorf("Error deleting fruit with ID %s, %v", ID, err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
 		return err
 	}
-	log.Infof("Fruit with id  %d successfully deleted", ID)
-	c.NoContent(http.StatusNoContent)
-	return nil
+	log.Infof("Fruit with id %s successfully deleted", ID)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetFruitsByName godoc
@@ -106,31 +85,9 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 // @Param name path string true "Full or partial name of the fruit"
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{name} [get]
+//@Router /fruits/search/{name} [get]
 func (e *Endpoints) GetFruitsByName(c echo.Context) error {
-	log := e.Config.Log
-	var name string
-	if err := echo.PathParamsBinder(c).
-		String("name", &name).
-		BindError(); err != nil {
-		utils.NewHTTPError(c, http.StatusInternalServerError, err)
-		return err
-	}
-	log.Infof("Getting Fruit with name %s", name)
-	ctx := e.Config.Ctx
-	dbConn := e.Config.DB
-	var fruits = &db.Fruits{}
-	if err := dbConn.NewSelect().
-		Model(fruits).
-		Where(`UPPER(name) LIKE ?`, fmt.Sprintf("%%%s%%", strings.ToUpper(name))).
-		Scan(ctx); err != nil {
-		log.Errorf("Error getting fruits by name %s, %v", name, err)
-		utils.NewHTTPError(c, http.StatusInternalServerError, err)
-		return err
-	}
-	log.Infof("Found %d Fruits with name %s", fruits.Len(), name)
-	c.JSON(http.StatusOK, fruits)
-	return nil
+	return e.fruitFinder(c, "name")
 }
 
 // GetFruitsBySeason godoc
@@ -143,29 +100,7 @@ func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 // @Failure 404 {object} utils.HTTPError
 //@Router /fruits/season/{season} [get]
 func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
-	log := e.Config.Log
-	var season string
-	if err := echo.PathParamsBinder(c).
-		String("season", &season).
-		BindError(); err != nil {
-		utils.NewHTTPError(c, http.StatusInternalServerError, err)
-		return err
-	}
-	log.Infof("Getting Fruit for season %s", season)
-	ctx := e.Config.Ctx
-	dbConn := e.Config.DB
-	var fruits = &db.Fruits{}
-	if err := dbConn.NewSelect().
-		Model(fruits).
-		Where("UPPER(season) = ?", strings.ToUpper(season)).
-		Scan(ctx); err != nil {
-		log.Errorf("Error getting fruits for season %s, %v", season, err)
-		utils.NewHTTPError(c, http.StatusInternalServerError, err)
-		return err
-	}
-	log.Infof("Found %d Fruits for season %s", fruits.Len(), season)
-	c.JSON(http.StatusOK, fruits)
-	return nil
+	return e.fruitFinder(c, "season")
 }
 
 // ListFruits godoc
@@ -180,16 +115,65 @@ func (e *Endpoints) ListFruits(c echo.Context) error {
 	log := e.Config.Log
 	log.Infoln("Getting All Fruits ")
 	ctx := e.Config.Ctx
-	dbConn := e.Config.DB
+	database := e.Config.DB
+	cur, err := database.Collection(e.Config.Collection).
+		Find(ctx, bson.D{},
+			options.
+				Find().
+				SetSort(bson.D{{"name", 1}})) //nolint:govet
+	if err != nil {
+		log.Errorf("Error getting all fruits, %v", err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
 	var fruits = &db.Fruits{}
-	if err := dbConn.NewSelect().
-		Model(fruits).
-		Scan(ctx); err != nil {
+	err = cur.All(ctx, fruits)
+	if err != nil {
 		log.Errorf("Error getting all fruits, %v", err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
 		return err
 	}
 	log.Infof("Found %d Fruits", fruits.Len())
-	c.JSON(http.StatusOK, fruits)
-	return nil
+	return c.JSON(http.StatusOK, fruits)
+}
+
+func (e *Endpoints) fruitFinder(c echo.Context, filterBy string) error {
+	log := e.Config.Log
+	var filterV string
+	if err := echo.PathParamsBinder(c).
+		String(filterBy, &filterV).
+		BindError(); err != nil {
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
+	log.Infof("Getting Fruit with %s %s", filterBy, filterV)
+	ctx := e.Config.Ctx
+	database := e.Config.DB
+	p := primitive.Regex{
+		Pattern: filterV,
+		Options: "i"}
+	filter := bson.D{
+		{ //nolint:govet
+			filterBy,
+			bson.D{
+				{"$regex", p}, //nolint:govet
+			},
+		},
+	}
+	cur, err := database.Collection(e.Config.Collection).Find(ctx, filter)
+	if err != nil {
+		log.Errorf("Error getting fruits by %s %s, %v", filterBy, filterV, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
+
+	var fruits = &db.Fruits{}
+	err = cur.All(ctx, fruits)
+	if err != nil {
+		log.Errorf("Error getting fruits by %s %s, %v", filterBy, filterV, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
+	log.Infof("Found %d Fruits by %s %s", fruits.Len(), filterBy, filterV)
+	return c.JSON(http.StatusOK, fruits)
 }

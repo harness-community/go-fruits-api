@@ -92,6 +92,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/fruits/search/{name}": {
+            "get": {
+                "description": "Gets list of fruits by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Gets fruits by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full or partial name of the fruit",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Fruit"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/fruits/season/{season}": {
             "get": {
                 "description": "Gets a list of fruits by season",
@@ -159,44 +197,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/fruits/{name}": {
-            "get": {
-                "description": "Gets list of fruits by name",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "fruit"
-                ],
-                "summary": "Gets fruits by name",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Full or partial name of the fruit",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/db.Fruit"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPError"
-                        }
-                    }
-                }
-            }
-        },
         "/health/live/": {
             "get": {
                 "description": "Checks the API liveness, can be used with Kubernetes Probes",
@@ -242,11 +242,9 @@ const docTemplate = `{
         "db.Fruit": {
             "type": "object",
             "properties": {
+                "_id": {},
                 "emoji": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "name": {
                     "type": "string"

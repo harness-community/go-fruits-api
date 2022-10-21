@@ -17,7 +17,7 @@ func LogSetup(out io.Writer, level string) *logrus.Logger {
 		lvl = logrus.WarnLevel
 	}
 
-	log := &logrus.Logger{
+	return &logrus.Logger{
 		Formatter: &logrus.TextFormatter{
 			FullTimestamp:   true,
 			TimestampFormat: "2006-01-02 15:15:10",
@@ -26,6 +26,4 @@ func LogSetup(out io.Writer, level string) *logrus.Logger {
 		//ReportCaller: true,
 		Level: lvl,
 	}
-
-	return log
 }

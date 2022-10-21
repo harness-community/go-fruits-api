@@ -3,21 +3,17 @@ package db
 import (
 	"fmt"
 	"sort"
-	"time"
-
-	"github.com/uptrace/bun"
 )
+
+//fruitsCollection represent Fruits in DB
+const fruitsCollection = "fruits"
 
 //Fruit model to hold the Fruit data
 type Fruit struct {
-	bun.BaseModel `bun:"table:fruits,alias:f"`
-
-	ID         int       `bun:",pk,autoincrement" json:"id"`
-	Name       string    `bun:",notnull" json:"name" `
-	Season     string    `bun:",notnull" json:"season"`
-	Emoji      string    `bun:"," json:"emoji,omitempty"`
-	CreatedAt  time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"-"`
-	ModifiedAt time.Time `json:"-"`
+	ID     interface{} `json:"_id,omitempty" bson:"_id,omitempty"`
+	Name   string      `json:"name" bson:"name" `
+	Season string      `json:"season" bson:"season" `
+	Emoji  string      `json:"emoji,omitempty" bson:"emoji,omitempty"`
 }
 
 //Fruits represents a collection of Fruits
@@ -41,5 +37,5 @@ func (f Fruits) Swap(i int, j int) {
 }
 
 func (f Fruit) String() string {
-	return fmt.Sprintf("ID: %d, Name: %s, Season: %s", f.ID, f.Name, f.Season)
+	return fmt.Sprintf("ID: %v, Name: %s, Season: %s", f.ID, f.Name, f.Season)
 }

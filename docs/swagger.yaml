@@ -2,10 +2,9 @@ basePath: /api
 definitions:
   db.Fruit:
     properties:
+      _id: {}
       emoji:
         type: string
-      id:
-        type: integer
       name:
         type: string
       season:
@@ -71,31 +70,6 @@ paths:
       summary: Delete a fruit from Database
       tags:
       - fruit
-  /fruits/{name}:
-    get:
-      description: Gets list of fruits by name
-      parameters:
-      - description: Full or partial name of the fruit
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/db.Fruit'
-            type: array
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.HTTPError'
-      summary: Gets fruits by name
-      tags:
-      - fruit
   /fruits/add:
     post:
       consumes:
@@ -120,6 +94,31 @@ paths:
           schema:
             $ref: '#/definitions/utils.HTTPError'
       summary: Add a fruit to Database
+      tags:
+      - fruit
+  /fruits/search/{name}:
+    get:
+      description: Gets list of fruits by name
+      parameters:
+      - description: Full or partial name of the fruit
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Fruit'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Gets fruits by name
       tags:
       - fruit
   /fruits/season/{season}:

@@ -3,6 +3,10 @@ run:
   timeout: 5m
   skip-dirs:
     - .github
+    - docs
+    - docker
+    - vendor
+    - work
 
 linters:
   enable:
@@ -21,8 +25,10 @@ linters:
     - whitespace
     - unconvert
     - unused
+
   disable:
     - errcheck
+    - typecheck
 
 linters-settings:
   gosec:
