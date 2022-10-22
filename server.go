@@ -48,7 +48,7 @@ var (
 // @schemes http https
 func main() {
 	var v, dbType, dbFile, dataDir string
-	flag.StringVar(&dbType, "dbType", utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite"), "The database to use. Valid values are sqlite, pg, mysql")
+	flag.StringVar(&dbType, "dbType", utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite"), "The database to use. Valid values are sqlite, pgsql, mysql")
 	flag.StringVar(&dbFile, "dbPath", utils.LookupEnvOrString("FRUITS_DB_FILE", "/data/db"), "Sqlite DB file")
 	flag.StringVar(&dataDir, "dataDir", "", "The data dir that will have the 'data.yaml' that will be loaded on to the Fruits table.")
 	flag.StringVar(&v, "level", utils.LookupEnvOrString("LOG_LEVEL", logrus.InfoLevel.String()), "The log level to use. Allowed values trace,debug,info,warn,fatal,panic.")
@@ -136,10 +136,9 @@ func addRoutes(dbc *db.Config) {
 		{
 			fruits.POST("/add", endpoints.AddFruit)
 			fruits.GET("/", endpoints.ListFruits)
-			//aliases for list
-			fruits.GET("/all", endpoints.ListFruits)
 			fruits.DELETE("/:id", endpoints.DeleteFruit)
-			fruits.GET("/:name", endpoints.GetFruitsByName)
+			fruits.DELETE("/", endpoints.DeleteAll)
+			fruits.GET("/search/:name", endpoints.GetFruitsByName)
 			fruits.GET("/season/:season", endpoints.GetFruitsBySeason)
 		}
 	}

@@ -1,4 +1,4 @@
-#INSERT INTO fruits(name,season,emoji) VALUES ('Mango','Spring','U+1F96D');
+ #INSERT INTO fruits(name,season,emoji) VALUES ('Mango','Spring','U+1F96D');
 # INSERT INTO fruits(name,season,emoji) VALUES ('Strawberry','Spring','U+1F353');
 # INSERT INTO fruits(name,season,emoji) VALUES ('Orange','Winter','U+1F34A');
 # INSERT INTO fruits(name,season,emoji) VALUES ('Lemon','Winter','U+1F34B');
@@ -10,55 +10,46 @@
 - model: Fruit
   rows:
     - _id: mango
-      id: 1
       name: "Mango"
       season: "Spring"
       emoji: "U+1F96D"
       created_at: "{{ now }}"
     - _id: strawberry
-      id: 2
       name: "Strawberry"
       season: "Spring"
       emoji: "U+1F96D"
       created_at: "{{ now }}"
     - _id: orange
-      id: 3
       name: "Orange"
       season: "Winter"
       emoji: "U+1F34B"
       created_at: "{{ now }}"
     - _id: lemon
-      id: 4
       name: "Lemon"
       season: "Winter"
       emoji: "U+1F34A"
       created_at: "{{ now }}"
     - _id: blueberry
-      id: 5
       name: "Blueberry"
       season: "Summer"
       emoji: "U+1FAD0"
       created_at: "{{ now }}"
     - _id: banana
-      id: 6
       name: "Banana"
       season: "Summer"
       emoji: "U+1F34C"
       created_at: "{{ now }}"
     - _id: watermelon
-      id: 7
       name: "Watermelon"
       season: "Summer"
       emoji: "U+1F349"
       created_at: "{{ now }}"
     - _id: apple
-      id: 8
       name: "Apple"
       season: "Fall"
       emoji: "U+1F34E"
       created_at: "{{ now }}"
     - _id: pear
-      id: 9
       name: "Pear"
       season: "Fall"
       emoji: "U+1F350"

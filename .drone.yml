@@ -1,11 +1,7 @@
 ---
 kind: pipeline
 type: docker
-name: "Build and Release"
-
-platform:
-  os: linux
-  arch: amd64
+name: default
 
 steps:
   - name: lint
@@ -17,14 +13,9 @@ steps:
     image: golang:1.18
     pull: if-not-exists
     commands:
+      - go clean -testcache
       - go test ./... -v
-    environment:
-      FRUITS_DB_TYPE: "pg"
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_PASSWORD: pa55Word!
-      POSTGRES_USER: demo
-      POSTGRES_DB: demodb
+
   - name: Build Binaries
     image: goreleaser/goreleaser
     pull: if-not-exists
@@ -32,55 +23,32 @@ steps:
       CGO_ENABLED: "0"
     commands:
       - goreleaser build --snapshot --rm-dist --debug
-  - name: Publish Image
-    image: plugins/docker
+
+  - name: push image to registry
+    image: thegeeklab/drone-docker-buildx
+    privileged: true
     pull: if-not-exists
-    # TODO update to use secrets
     settings:
-      insecure: true
-      auto_tag: true
-      auto_tag_suffix: linux-amd64
-      dockerfile: docker/Dockerfile.linux.amd64
-      registry: 
-        # "localhost:5001/example/go-fruits-api"
-        from_secret: registry 
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      context: .
+
 services:
-  - name: postgres
+  # Default database for testing
+  - name: postgresql
     image: postgres:14.4-alpine
     environment:
       POSTGRES_PORT: 5432
       POSTGRES_PASSWORD: pa55Word!
       POSTGRES_USER: demo
       POSTGRES_DB: demodb
----
-kind: pipeline
-type: docker
-name: "Publish Manifest"
-
-depends_on:
-  - "Build and Release"
-
-trigger:
-  branch:
-    - main
-  event:
-    - tag
-    - push
-
-steps:
-  - name: Publish Manifests
-    image: plugins/manifest:1.2
-    settings:
-      auto_tag: true
-      insecure: true
-      ignore_missing: true
-      spec: docker/manifest.tmpl
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
-
+  # If you are using mysql/mariadb, uncomment this
+  # - name: mysql
+  #   image: mariadb
+  #   environment:
+  #     MYSQL_PORT: 3306
+  #     MYSQL_ROOT_PASSWORD: superS3cret!
+  #     MYSQL_PASSWORD: pa55Word!
+  #     MYSQL_USER: demo
+  #     MYSQL_DATABASE: demodb

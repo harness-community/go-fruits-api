@@ -13,7 +13,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-//AddFruit godoc
+// AddFruit godoc
 // @Summary Add a fruit to Database
 // @Description Adds a new Fruit to the Database
 // @Tags fruit
@@ -22,7 +22,7 @@ import (
 // @Param message body db.Fruit true "Fruit object"
 // @Success 200 {object} db.Fruit
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/add [post]
+// @Router /fruits/add [post]
 func (e *Endpoints) AddFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
@@ -36,6 +36,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 		_, err := dbConn.NewInsert().
 			Model(f).
 			Exec(ctx)
+
 		if err != nil {
 			return err
 		}
@@ -47,8 +48,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 		return err
 	}
 	log.Infof("Fruit %s successfully saved", f)
-	c.JSON(http.StatusCreated, f)
-	return nil
+	return c.JSON(http.StatusCreated, f)
 }
 
 // DeleteFruit godoc
@@ -58,7 +58,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 // @Param id path int true "Fruit ID"
 // @Success 204
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{id} [delete]
+// @Router /fruits/{id} [delete]
 func (e *Endpoints) DeleteFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
@@ -94,8 +94,38 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 		return err
 	}
 	log.Infof("Fruit with id  %d successfully deleted", ID)
-	c.NoContent(http.StatusNoContent)
-	return nil
+	return c.NoContent(http.StatusNoContent)
+}
+
+// DeleteAll godoc
+// @Summary Delete all fruit from Database
+// @Description Delete all fruit from Database
+// @Tags fruit
+// @Success 204
+// @Failure 404 {object} utils.HTTPError
+// @Router /fruits/ [delete]
+func (e *Endpoints) DeleteAll(c echo.Context) error {
+	log := e.Config.Log
+	ctx := e.Config.Ctx
+	dbConn := e.Config.DB
+
+	log.Infoln("Deleting all fruits")
+	err := dbConn.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		_, err := dbConn.NewTruncateTable().
+			Model((*db.Fruit)(nil)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		log.Errorf("Error deleting all fruits, %v", err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
+	log.Infof("All fruits successfully deleted")
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetFruitsByName godoc
@@ -106,7 +136,7 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 // @Param name path string true "Full or partial name of the fruit"
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{name} [get]
+// @Router /fruits/search/{name} [get]
 func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 	log := e.Config.Log
 	var name string
@@ -129,8 +159,7 @@ func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 		return err
 	}
 	log.Infof("Found %d Fruits with name %s", fruits.Len(), name)
-	c.JSON(http.StatusOK, fruits)
-	return nil
+	return c.JSON(http.StatusOK, fruits)
 }
 
 // GetFruitsBySeason godoc
@@ -141,7 +170,7 @@ func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 // @Param season path string true "Full or partial name of the season"
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/season/{season} [get]
+// @Router /fruits/season/{season} [get]
 func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 	log := e.Config.Log
 	var season string
@@ -164,8 +193,7 @@ func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 		return err
 	}
 	log.Infof("Found %d Fruits for season %s", fruits.Len(), season)
-	c.JSON(http.StatusOK, fruits)
-	return nil
+	return c.JSON(http.StatusOK, fruits)
 }
 
 // ListFruits godoc
@@ -175,7 +203,7 @@ func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits [get]
+// @Router /fruits/ [get]
 func (e *Endpoints) ListFruits(c echo.Context) error {
 	log := e.Config.Log
 	log.Infoln("Getting All Fruits ")
@@ -190,6 +218,5 @@ func (e *Endpoints) ListFruits(c echo.Context) error {
 		return err
 	}
 	log.Infof("Found %d Fruits", fruits.Len())
-	c.JSON(http.StatusOK, fruits)
-	return nil
+	return c.JSON(http.StatusOK, fruits)
 }

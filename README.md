@@ -1,134 +1,74 @@
 # Fruits API
 
-The demo application that can be used to demonstrate on how to do CI with Java Applications with Drone CI.
+A simple Fruits REST API built in `golang` using Labstack's [Echo](https://https://echo.labstack.com/]).
+
+- For RDBMS(PostgreSQL,MySQL/MariaDB) demo use the [main](../../tree/main) branch
+- NoSQL(__MongoDB__) please switch to [mongodb](../../tree/mongodb) branch.
 
 ## Pre-requisites
 
-* [Docker Desktop](https://docs.docker.com/desktop/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools)
-* [httpie](https://httpie.io)
-* [k3d](https://k3d.io)
-* [kustomize](https://kustomize.io/)
+- [Docker Desktop](https://docs.docker.com/desktop/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools)
+- [Drone CI CLI](https://docs.drone.io/cli/install/)
+
+## Environment Setup
+
+Copy the `.env.example` to `.env` and update the following variables to suit your settings.
+
+- `PLUGIN_REGISTRY` - the docker registry to use
+- `PLUGIN_TAG`      - the tag to push the image to docker registry
+- `PLUGIN_REPO`     - the docker registry repository
+- `PLUGIN_USERNAME` - the docker Registry username
+- `PLUGIN_PASSWORD` - the docker registry password
+
+### Backend Database to use
+
+- `FRUITS_DB_TYPE` - the database to use with fruits api, defaults: `sqlite`
+
+### Postgresql DB Settings
+
+- `POSTGRES_HOST` - the postgresql host usually the docker or kubernetes service name e.g. `postgresql`
+- `POSTGRES_PORT` - the postgresql port e.g. `5432`
+- `POSTGRES_USER` - the postgresql user e.g. `demo`
+- `POSTGRES_PASSWORD` - the postgresql password e.g `pa55Word!`
+- `POSTGRES_DB` - the postgresql database to use e.g `demodb`
+
+### MariaDB/MySQL Settings
+
+- `MYSQL_HOST` - the MySQL host usually the docker or kubernetes service name e.g.`mysql`
+- `MYSQL_PORT` - the MySQL port e.g. `3306`
+- `MYSQL_ROOT_PASSWORD` - the MySQL root password `superS3cret!`
+- `MYSQL_PASSWORD` - the MySQL password `pa55Word!`
+- `MYSQL_USER` - the MySQL user e.g `demo`
+- `MYSQL_DATABASE` - the MySQL database to use e.g `demodb`
+
+### SQLite
+
+- `FRUITS_DB_FILE` - the default database file to use.
   
-## Download Sources
-
-This application has two microservices
-
-1. [Fruits API](https://github.com/kameshsampath/go-fruits-api)  -  that provides the REST API for managing the Fruits
-
-2. [Fruits App UI](https://github.com/kameshsampath/fruits-app-ui) - the front end to the application
-
-```shell
-git clone https://github.com/harness-apps/go-fruits-api go-fruits-api && cd $_
-```
-
-We will refer to the cloned folder as `$PROJECT_HOME`:
-
-```shell
-export PROJECT_HOME="$(pwd)"
-```
-
-## Test
-
-### Local
-
-```shell
-mkdir work
-docker-compose up -d
-go run server.go -dbType pg 
-```
-
-Swagger UI <http://localhost:8080/swagger/index.html>
-
-### Kubernetes
-
-### Create Cluster
-
-Lets keep kube config local to the folder,
-
-```shell
-mkdir -p "$PWD/.kube"
-```
-
-Create a local container registry to use,
-
-```shell
-k3d registry create myregistry.localhost --port 5001
-```
-
-Use the registry with the cluster,
-
-```shell
-k3d cluster create fruits-api \
-  --registry-use k3d-myregistry.localhost:5001
-```
-
-## Deploy Database
-
-```shell
-kubectl apply -k k8s/db
-```
-
-Wait for pods to be in running state:
-
-```shell
-kubectl rollout status -n db deploy/postgresql --timeout=60s
-```
-
-## Deploy application
-
-```shell
-kubectl apply -f k8s/app
-```
-
-Wait for pods to be in running state:
-
-```shell
-kubectl rollout status -n fruits-app deploy/fruits-api --timeout=60s
-```
-
-```shell
-kubectl port-forward -n fruits-app svc/fruits-api 8080:8080
-
-```
-
-Check if you are able to access the API, the following call should return you list of fruits as JSON,
-
-```shell
-curl localhost:8080/v1/api/fruits
-```
-
-```json
-[
-  { "id": 1, "name": "Mango", "season": "Spring", "emoji": "U+1F96D" },
-  { "id": 2, "name": "Strawberry", "season": "Spring", "emoji": "U+1F96D" },
-  { "id": 3, "name": "Orange", "season": "Winter", "emoji": "U+1F34B" },
-  { "id": 4, "name": "Lemon", "season": "Winter", "emoji": "U+1F34A" },
-  { "id": 5, "name": "Blueberry", "season": "Summer", "emoji": "U+1FAD0" },
-  { "id": 6, "name": "Banana", "season": "Summer", "emoji": "U+1F34C" },
-  { "id": 7, "name": "Watermelon", "season": "Summer", "emoji": "U+1F349" },
-  { "id": 8, "name": "Apple", "season": "Fall", "emoji": "U+1F34E" },
-  { "id": 9, "name": "Pear", "season": "Fall", "emoji": "U+1F350" }
-]
-```
-
-## Local Development
-
-Download/install [ko](https://github.com/ko-build/ko) and run,
-
-```shell
-kustomize build config/app | ko resolve -f - | k apply -f -
-```
-
-> **NOTE:**
-> If you are using arm64 machines then add option --platform=linux/arm64 to ko command
+>__NOTE:__
 >
-> ```shell
-> kustomize build config/app | ko resolve --platform=linux/arm64 -f - | k apply -f -
-> ```
+> - Most of the above database settings comes from how you setup the datbase. Please update accordingly
+> - If you use FRUITS_DB_FILE  to use for testing.
 
-## Clean
+## Build the Application
+
+Set the `FRUIT_DB_TYPE` to `pgsql` or `mysql` to run tests against those databases. As by default all the tests are performed against `SQLite`.
 
 ```shell
-k3d cluster delete fruits-api
+drone exec --trusted --env-file=.env
 ```
+
+The command will test, build and push the container image to the `$PLUGIN_REPO:$PLUGIN_TAG`.
+
+## Run Application
+
+### Locally
+
+```shell
+docker-compose up
+```
+
+## Testing
+
+The application provides a [Swagger UI](http://localhost:8080/swagger/index.html) that can be used to used to play with the API.

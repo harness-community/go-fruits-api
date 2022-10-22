@@ -33,7 +33,19 @@ info:
   title: Fruits API
   version: "1.0"
 paths:
-  /fruits:
+  /fruits/:
+    delete:
+      description: Delete all fruit from Database
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Delete all fruit from Database
+      tags:
+      - fruit
     get:
       description: Gets a list all available fruits from the database
       produces:
@@ -71,31 +83,6 @@ paths:
       summary: Delete a fruit from Database
       tags:
       - fruit
-  /fruits/{name}:
-    get:
-      description: Gets list of fruits by name
-      parameters:
-      - description: Full or partial name of the fruit
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/db.Fruit'
-            type: array
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.HTTPError'
-      summary: Gets fruits by name
-      tags:
-      - fruit
   /fruits/add:
     post:
       consumes:
@@ -120,6 +107,31 @@ paths:
           schema:
             $ref: '#/definitions/utils.HTTPError'
       summary: Add a fruit to Database
+      tags:
+      - fruit
+  /fruits/search/{name}:
+    get:
+      description: Gets list of fruits by name
+      parameters:
+      - description: Full or partial name of the fruit
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.Fruit'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Gets fruits by name
       tags:
       - fruit
   /fruits/season/{season}:

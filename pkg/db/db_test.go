@@ -9,15 +9,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dbfixture"
+	"github.com/uptrace/bun/dialect"
 )
 
 func TestInitDB(t *testing.T) {
-	log := utils.LogSetup(os.Stdout, "debug")
+	log := utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
+	ctx := context.TODO()
 	dbc := New(
-		WithContext(context.TODO()),
-		WithDBFile("testdata/test.db"),
-		WithLogger(log))
-
+		WithContext(ctx),
+		WithLogger(log),
+		WithDBType(utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")),
+		WithDBFile("testdata/test.db"))
 	dbc.Init()
 
 	err := dbc.DB.Ping()
@@ -48,6 +50,25 @@ func TestInitDB(t *testing.T) {
 	assert.Equal(t, 1, 1, "Expected ID to be  %d but got %d", 1, actual.ID)
 	assert.Equal(t, expected.Name, actual.Name, "Expected Name to be  %s but got %s", expected.Name, actual.Name)
 	assert.Equal(t, expected.Name, actual.Name, "Expected Season to be  %s but got %s", expected.Season, actual.Season)
+
+	var lastID int
+	var seqQuery string
+	switch dbc.DBType {
+	case dialect.PG:
+		seqQuery = "SELECT currval(pg_get_serial_sequence('fruits','id'))"
+	case dialect.MySQL:
+		seqQuery = "SELECT LAST_INSERT_ID()"
+	default:
+		seqQuery = "SELECT ROWID from FRUITS order by ROWID DESC limit 1"
+	}
+
+	err = dbc.DB.NewRaw(seqQuery).Scan(dbc.Ctx, &lastID)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, 1, 1, "Expected Last Sequential ID to be  %d but got %d", 9, lastID)
 
 	tearDown()
 }

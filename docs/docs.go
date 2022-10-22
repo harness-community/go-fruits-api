@@ -23,7 +23,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/fruits": {
+        "/fruits/": {
             "get": {
                 "description": "Gets a list all available fruits from the database",
                 "produces": [
@@ -42,6 +42,24 @@ const docTemplate = `{
                                 "$ref": "#/definitions/db.Fruit"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete all fruit from Database",
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Delete all fruit from Database",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -81,6 +99,44 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/db.Fruit"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/fruits/search/{name}": {
+            "get": {
+                "description": "Gets list of fruits by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Gets fruits by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full or partial name of the fruit",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Fruit"
+                            }
                         }
                     },
                     "404": {
@@ -149,44 +205,6 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.HTTPError"
-                        }
-                    }
-                }
-            }
-        },
-        "/fruits/{name}": {
-            "get": {
-                "description": "Gets list of fruits by name",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "fruit"
-                ],
-                "summary": "Gets fruits by name",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Full or partial name of the fruit",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/db.Fruit"
-                            }
-                        }
                     },
                     "404": {
                         "description": "Not Found",

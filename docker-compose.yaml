@@ -1,14 +1,30 @@
 version: "3.7"
 services:
+  fruits-api:
+    image: "${PLUGIN_REGISTRY}/${PLUGIN_REPO}:${PLUGIN_TAG}"
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - postgresql
+    #  - mysql
   postgresql:
     image: postgres:14.4-alpine
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: pa55Word!
-      POSTGRES_USER: demo
-      POSTGRES_DB: demodb
+    env_file:
+      - .env
+  # mysql:
+  #   image: mariadb
+  #   ports:
+  #     - "3306:3306"
+  #   env_file:
+  #     - .env
   db-adminer:
     image: adminer
     ports:
       - "9090:8080"
+networks:
+  fruits-app:
+  

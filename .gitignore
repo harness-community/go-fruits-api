@@ -39,6 +39,9 @@ hack/env/envvars
 hack/env/extravars
 hack/project/.tool-versions
 .envrc.local
-dist/
+
+dist
 **/test.db
 work
+env*
+.envrc.local

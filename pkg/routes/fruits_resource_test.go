@@ -39,18 +39,19 @@ func getDBFile(dbName string) string {
 
 func loadFixtures() (*db.Config, error) {
 	log = utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
+	ctx := context.TODO()
 	dbc := db.New(
-		db.WithContext(context.TODO()),
+		db.WithContext(ctx),
 		db.WithLogger(log),
 		db.WithDBType(utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")),
 		db.WithDBFile(getDBFile("test")))
-
 	dbc.Init()
 
 	if err := dbc.DB.Ping(); err != nil {
 		return nil, err
 	}
 
+	dbc.DB.RegisterModel((*db.Fruit)(nil))
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
 	if err := dbfx.Load(dbc.Ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		return nil, err
@@ -64,24 +65,12 @@ func TestAddFruit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	testCases := map[string]struct {
 		requestBody string
 		statusCode  int
 		want        db.Fruit
 	}{
-		"withId": {
-			requestBody: `{
-        "id": 10,
-        "name": "Test Fruit",
-        "season": "Summer"
-        }`,
-			statusCode: http.StatusCreated,
-			want: db.Fruit{
-				ID:     10,
-				Name:   "Test Fruit",
-				Season: "Summer",
-			},
-		},
 		"withoutId": {
 			requestBody: `{
         "name": "Test Fruit 2",
@@ -89,9 +78,22 @@ func TestAddFruit(t *testing.T) {
         }`,
 			statusCode: http.StatusCreated,
 			want: db.Fruit{
-				ID:     11,
+				ID:     10,
 				Name:   "Test Fruit 2",
 				Season: "Spring",
+			},
+		},
+		"withId": {
+			requestBody: `{
+        "id": 11,
+        "name": "Test Fruit",
+        "season": "Summer"
+        }`,
+			statusCode: http.StatusCreated,
+			want: db.Fruit{
+				ID:     11,
+				Name:   "Test Fruit",
+				Season: "Summer",
 			},
 		},
 	}
@@ -123,6 +125,34 @@ func TestAddFruit(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDeleteAllFruit(t *testing.T) {
+	dbc, err := loadFixtures()
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, "/api/fruits/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	ep := &Endpoints{
+		Config: dbc,
+	}
+	if assert.NoError(t, ep.DeleteAll(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		dbConn := ep.Config.DB
+		ctx := context.TODO()
+		c, err := dbConn.NewSelect().
+			Model((*db.Fruit)(nil)).
+			Count(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.NoError(t, err)
+		assert.Truef(t, c == 0, "Expecting no Fruits but it does")
 	}
 }
 

@@ -19,9 +19,12 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/driver/sqliteshim"
 	"github.com/uptrace/bun/extra/bundebug"
+
+	// used to import mysql drivers
+	_ "github.com/go-sql-driver/mysql"
 )
 
-//Config configures the database to initialize
+// Config configures the database to initialize
 type Config struct {
 	Ctx    context.Context
 	dbOnce sync.Once
@@ -60,7 +63,7 @@ func WithDBFile(dbFile string) Option {
 func WithDBType(dbType string) Option {
 	return func(c *Config) {
 		switch dbType {
-		case "pg":
+		case "pgsql":
 			c.DBType = dialect.PG
 		case "mysql":
 			c.DBType = dialect.MySQL
@@ -72,7 +75,7 @@ func WithDBType(dbType string) Option {
 	}
 }
 
-//New creates a new instance of Config to create and initialize new database
+// New creates a new instance of Config to create and initialize new database
 func New(options ...Option) *Config {
 	cfg := &Config{}
 	for _, o := range options {
@@ -82,7 +85,7 @@ func New(options ...Option) *Config {
 	return cfg
 }
 
-//Init initializes the database with the given configuration
+// Init initializes the database with the given configuration
 func (c *Config) Init() *bun.DB {
 	c.dbOnce.Do(func() {
 		log := c.Log
@@ -99,6 +102,9 @@ func (c *Config) Init() *bun.DB {
 				log.Fatal(err)
 			}
 			db = bun.NewDB(sqldb, mysqldialect.New())
+			db.SetConnMaxLifetime(time.Minute * 3)
+			db.SetMaxOpenConns(10)
+			db.SetMaxIdleConns(10)
 		default:
 			sqlite, err := sql.Open(sqliteshim.ShimName, fmt.Sprintf("file:%s?cache=shared", c.DBFile))
 			if err != nil {
@@ -183,7 +189,6 @@ func buildPGConnector() *pgdriver.Connector {
 	return pgConn
 }
 
-//TODO build the connector
 func buildMYSQLDSN() string {
 	var (
 		mySQLHost     = "localhost"
@@ -191,6 +196,7 @@ func buildMYSQLDSN() string {
 		mySQLUser     = "demo"
 		mySQLPassword = "pa55Word!"
 		mySQLDatabase = "demodb"
+		mySQLProtocol = "tcp"
 	)
 
 	if h, ok := os.LookupEnv("MYSQL_HOST"); ok {
@@ -208,7 +214,10 @@ func buildMYSQLDSN() string {
 	if d, ok := os.LookupEnv("MYSQL_DB"); ok {
 		mySQLDatabase = d
 	}
+	if d, ok := os.LookupEnv("MYSQL_PROTOCOL"); ok {
+		mySQLProtocol = d
+	}
 
-	return fmt.Sprintf("%s:%s@%s:%s/%s",
-		mySQLUser, mySQLPassword, mySQLHost, mySQLPort, mySQLDatabase)
+	return fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
+		mySQLUser, mySQLPassword, mySQLProtocol, mySQLHost, mySQLPort, mySQLDatabase)
 }
