@@ -15,11 +15,6 @@ steps:
     commands:
       - go clean -testcache
       - go test ./... -v
-    environment:
-      QUARKUS_MONGODB_CONNECTION_STRING: "mongodb://mongodb"
-      FRUIT_DB: "testdb"
-      FRUIT_COLLECTION: "fruits"
-      TEST_LOG_LEVEL: info
 
   - name: Build Binaries
     image: goreleaser/goreleaser
@@ -42,9 +37,5 @@ steps:
 services:
   - name: mongodb
     image: mongo
-    environment:
-      # MONGO_INITDB_ROOT_USERNAME: admin
-      # MONGO_INITDB_ROOT_PASSWORD: demo
-      MONGO_INITDB_DATABASE: testdb
 
       

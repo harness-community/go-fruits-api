@@ -21,6 +21,13 @@ Copy the `.env.example` to `.env` and update the following variables to suit you
 - `PLUGIN_USERNAME` - the docker Registry username
 - `PLUGIN_PASSWORD` - the docker registry password
 
+- `QUARKUS_MONGODB_CONNECTION_STRING` - the mongodb connection string
+- `FRUIT_DB` - the mongodb database that needs to be used e.g. `demodb`
+- `FRUITS_DB_COLLECTION` - the mongodb collection to use for fruits e.g. fruits
+- `MONGO_INITDB_DATABASE` - the mongodb database that will be used for testing e.g. `demodb`
+- `MONGO_INITDB_ROOT_USERNAME` - optional mongodb connection user
+- `MONGO_INITDB_ROOT_PASSWORD` - optional mongodb connection user password
+
 ## Build the Application
 
 ```shell
@@ -47,9 +54,7 @@ The application requires the following variables to be able to connect to DB,
 
 ```shell
 docker run --rm \
-  -e "QUARKUS_MONGODB_CONNECTION_STRING=$QUARKUS_MONGODB_CONNECTION_STRING" \
-  -e "FRUIT_DB=demodb" \
-  -e "FRUITS_DB_COLLECTION=fruits" \
+  -env-file .env \
   -p "8080:8080" \
   "$PLUGIN_REPO:$PLUGIN_TAG"
 ```
