@@ -1,7 +1,7 @@
 #syntax=docker/dockerfile:1.3-labs
 FROM goreleaser/goreleaser as builder
 
-WORKDIR build
+WORKDIR /build
 
 COPY . .
 
