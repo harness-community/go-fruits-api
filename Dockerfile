@@ -1,18 +1,16 @@
 #syntax=docker/dockerfile:1.3-labs
+FROM goreleaser/goreleaser as builder
 
-FROM golang:1.18-alpine
-ARG TARGETARCH
-
-ENV CGO_ENABLED=0
-
-RUN apk add --update
-
-WORKDIR /build
+WORKDIR build
 
 COPY . .
 
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=linux GOARCH=${TARGETARCH} go build -o server server.go
+RUN goreleaser build --single-target --snapshot --rm-dist --output /bin/server
 
-CMD [ "/build/server" ]
+FROM gcr.io/distroless/base
+
+COPY --from=builder /bin/server /bin/server
+
+EXPOSE 8080
+
+ENTRYPOINT ["server"]

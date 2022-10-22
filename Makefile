@@ -28,10 +28,10 @@ ko: ## Dev deployment using ko
 manifests:	## Generates application deployment manifests
 
 build-push-image:	## Builds Container Image
-	@drone exec --env-file=.env
+	@drone exec --trusted --env-file=.env
 
 help: ## Show this help
 	@echo Please specify a build target. The choices are:
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "$(INFO_COLOR)%-30s$(NO_COLOR) %s\n", $$1, $$2}'
 
-.PHONY: swaggo	test	start-db	clean	lint	vendor	help
+.PHONY: swaggo	test	start-db	clean	lint	vendor	help swaggo build-push-image
