@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-//AddFruit godoc
+// AddFruit godoc
 // @Summary Add a fruit to Database
 // @Description Adds a new Fruit to the Database
 // @Tags fruit
@@ -20,7 +20,7 @@ import (
 // @Param message body db.Fruit true "Fruit object"
 // @Success 200 {object} db.Fruit
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/add [post]
+// @Router /fruits/add [post]
 func (e *Endpoints) AddFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
@@ -42,14 +42,35 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 	return c.JSON(http.StatusCreated, f)
 }
 
+// DeleteAll godoc
+// @Summary Deletes all the fruits from Database
+// @Description Deletes all the fruits from Database
+// @Tags fruit
+// @Success 204
+// @Failure 404 {object} utils.HTTPError
+// @Router /fruits/ [delete]
+func (e *Endpoints) DeleteAll(c echo.Context) error {
+	log := e.Config.Log
+	ctx := e.Config.Ctx
+	database := e.Config.DB
+	_, err := database.Collection(e.Config.Collection).DeleteMany(ctx, bson.D{})
+	if err != nil {
+		log.Errorf("Error deleting all fruits,%v", err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
+	log.Infoln("All fruits deleted")
+	return c.NoContent(http.StatusNoContent)
+}
+
 // DeleteFruit godoc
 // @Summary Delete a fruit from Database
 // @Description Deletes a Fruit to the Database
 // @Tags fruit
-// @Param id path int true "Fruit ID"
+// @Param id path string true "Fruit ID"
 // @Success 204
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/{id} [delete]
+// @Router /fruits/{id} [delete]
 func (e *Endpoints) DeleteFruit(c echo.Context) error {
 	log := e.Config.Log
 	ctx := e.Config.Ctx
@@ -85,7 +106,7 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 // @Param name path string true "Full or partial name of the fruit"
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/search/{name} [get]
+// @Router /fruits/search/{name} [get]
 func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 	return e.fruitFinder(c, "name")
 }
@@ -98,7 +119,7 @@ func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 // @Param season path string true "Full or partial name of the season"
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits/season/{season} [get]
+// @Router /fruits/season/{season} [get]
 func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 	return e.fruitFinder(c, "season")
 }
@@ -110,7 +131,7 @@ func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} db.Fruits
 // @Failure 404 {object} utils.HTTPError
-//@Router /fruits [get]
+// @Router /fruits/ [get]
 func (e *Endpoints) ListFruits(c echo.Context) error {
 	log := e.Config.Log
 	log.Infoln("Getting All Fruits ")

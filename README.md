@@ -35,4 +35,4 @@ The command will test, build and push the container image to the `$PLUGIN_REPO:$
 docker-compose up
 ```
 
-The application provides a Swagger UI that is accessible at <http://localhost:8080/swagger> which could be used to work with the API.
+The application provides a [Swagger UI](http://localhost:8080/swagger/index.html) that can be used to used to play with the API.

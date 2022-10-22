@@ -19,8 +19,6 @@ import (
 	"os"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
-
-	_ "github.com/uptrace/bun"
 )
 
 var (
@@ -121,6 +119,7 @@ func addRoutes(dbc *db.Config) {
 			fruits.POST("/add", endpoints.AddFruit)
 			fruits.GET("/", endpoints.ListFruits)
 			fruits.DELETE("/:id", endpoints.DeleteFruit)
+			fruits.DELETE("/", endpoints.DeleteAll)
 			fruits.GET("/search/:name", endpoints.GetFruitsByName)
 			fruits.GET("/season/:season", endpoints.GetFruitsBySeason)
 		}

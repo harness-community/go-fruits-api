@@ -32,7 +32,19 @@ info:
   title: Fruits API
   version: "1.0"
 paths:
-  /fruits:
+  /fruits/:
+    delete:
+      description: Deletes all the fruits from Database
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.HTTPError'
+      summary: Deletes all the fruits from Database
+      tags:
+      - fruit
     get:
       description: Gets a list all available fruits from the database
       produces:
@@ -59,7 +71,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "204":
           description: No Content

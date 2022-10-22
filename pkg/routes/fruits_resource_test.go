@@ -23,15 +23,15 @@ import (
 
 var (
 	testData = []interface{}{
-		bson.D{{"_id", "1"}, {"name", "Mango"}, {"season", "Spring"}, {"emoji", "U+1F96D"}},      //nolint:govet
-		bson.D{{"_id", "2"}, {"name", "Strawberry"}, {"season", "Spring"}, {"emoji", "U+1F96D"}}, //nolint:govet
-		bson.D{{"_id", "3"}, {"name", "Orange"}, {"season", "Winter"}, {"emoji", "U+1F34B"}},     //nolint:govet
-		bson.D{{"_id", "4"}, {"name", "Lemon"}, {"season", "Winter"}, {"emoji", "U+1F34A"}},      //nolint:govet
-		bson.D{{"_id", "5"}, {"name", "Blueberry"}, {"season", "Summer"}, {"emoji", "U+1FAD0"}},  //nolint:govet
-		bson.D{{"_id", "6"}, {"name", "Banana"}, {"season", "Summer"}, {"emoji", "U+1F34C"}},     //nolint:govet
-		bson.D{{"_id", "7"}, {"name", "Watermelon"}, {"season", "Summer"}, {"emoji", "U+1F349"}}, //nolint:govet
-		bson.D{{"_id", "8"}, {"name", "Apple"}, {"season", "Fall"}, {"emoji", "U+1F34E"}},        //nolint:govet
-		bson.D{{"_id", "9"}, {"name", "Pear"}, {"season", "Fall"}, {"emoji", "U+1F350"}},         //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b00c"}, {"name", "Mango"}, {"season", "Spring"}, {"emoji", "U+1F96D"}},      //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b00d"}, {"name", "Strawberry"}, {"season", "Spring"}, {"emoji", "U+1F96D"}}, //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b00e"}, {"name", "Orange"}, {"season", "Winter"}, {"emoji", "U+1F34B"}},     //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b00f"}, {"name", "Lemon"}, {"season", "Winter"}, {"emoji", "U+1F34A"}},      //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b010"}, {"name", "Blueberry"}, {"season", "Summer"}, {"emoji", "U+1FAD0"}},  //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b011"}, {"name", "Banana"}, {"season", "Summer"}, {"emoji", "U+1F34C"}},     //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b012"}, {"name", "Watermelon"}, {"season", "Summer"}, {"emoji", "U+1F349"}}, //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b013"}, {"name", "Apple"}, {"season", "Fall"}, {"emoji", "U+1F34E"}},        //nolint:govet
+		bson.D{{"_id", "6353a9539b290040a606b014"}, {"name", "Pear"}, {"season", "Fall"}, {"emoji", "U+1F350"}},         //nolint:govet
 	}
 	log *logrus.Logger
 )
@@ -71,13 +71,13 @@ func TestAddFruit(t *testing.T) {
 	}{
 		"withId": {
 			requestBody: `{
-        "_id": "10",
+        "_id": "6353a9539b290040a606b015",
         "name": "Test Fruit",
         "season": "Summer"
         }`,
 			statusCode: http.StatusCreated,
 			want: db.Fruit{
-				ID:     "10",
+				ID:     "6353a9539b290040a606b015",
 				Name:   "Test Fruit",
 				Season: "Summer",
 			},
@@ -140,7 +140,7 @@ func TestAddFruit(t *testing.T) {
 }
 
 func TestDeleteFruit(t *testing.T) {
-	fruitID := "5"
+	fruitID := "6353a9539b290040a606b010"
 	dbc, err := loadFixtures()
 	if err != nil {
 		t.Fatal(err)
@@ -169,6 +169,33 @@ func TestDeleteFruit(t *testing.T) {
 	}
 }
 
+func TestDeleteAll(t *testing.T) {
+	dbc, err := loadFixtures()
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, "/api/fruits/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	ep := &Endpoints{
+		Config: dbc,
+	}
+	if assert.NoError(t, ep.DeleteAll(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		database := ep.Config.DB
+		ctx := context.TODO()
+		count, err := database.
+			Collection("fruits").
+			EstimatedDocumentCount(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Truef(t, count == 0, "Expecting no records to exist in the collection, but it does")
+	}
+}
+
 func TestGetFruitByName(t *testing.T) {
 	testCases := map[string]struct {
 		name string
@@ -178,7 +205,7 @@ func TestGetFruitByName(t *testing.T) {
 			name: "Apple",
 			want: db.Fruits{
 				{
-					ID:     "8",
+					ID:     "6353a9539b290040a606b013",
 					Name:   "Apple",
 					Emoji:  "U+1F34E",
 					Season: "Fall",
@@ -189,7 +216,7 @@ func TestGetFruitByName(t *testing.T) {
 			name: "apple",
 			want: db.Fruits{
 				{
-					ID:     "8",
+					ID:     "6353a9539b290040a606b013",
 					Name:   "Apple",
 					Emoji:  "U+1F34E",
 					Season: "Fall",
@@ -200,7 +227,7 @@ func TestGetFruitByName(t *testing.T) {
 			name: "APPLE",
 			want: db.Fruits{
 				{
-					ID:     "8",
+					ID:     "6353a9539b290040a606b013",
 					Name:   "Apple",
 					Emoji:  "U+1F34E",
 					Season: "Fall",
@@ -211,7 +238,7 @@ func TestGetFruitByName(t *testing.T) {
 			name: "apPLe",
 			want: db.Fruits{
 				{
-					ID:     "8",
+					ID:     "6353a9539b290040a606b013",
 					Name:   "Apple",
 					Emoji:  "U+1F34E",
 					Season: "Fall",
@@ -263,19 +290,19 @@ func TestGetFruitsBySeason(t *testing.T) {
 			season: "Summer",
 			want: db.Fruits{
 				{
-					ID:     "5",
+					ID:     "6353a9539b290040a606b010",
 					Name:   "Blueberry",
 					Emoji:  "U+1FAD0",
 					Season: "Summer",
 				},
 				{
-					ID:     "6",
+					ID:     "6353a9539b290040a606b011",
 					Name:   "Banana",
 					Emoji:  "U+1F34C",
 					Season: "Summer",
 				},
 				{
-					ID:     "7",
+					ID:     "6353a9539b290040a606b012",
 					Name:   "Watermelon",
 					Emoji:  "U+1F349",
 					Season: "Summer",
@@ -286,19 +313,19 @@ func TestGetFruitsBySeason(t *testing.T) {
 			season: "summer",
 			want: db.Fruits{
 				{
-					ID:     "5",
+					ID:     "6353a9539b290040a606b010",
 					Name:   "Blueberry",
 					Emoji:  "U+1FAD0",
 					Season: "Summer",
 				},
 				{
-					ID:     "6",
+					ID:     "6353a9539b290040a606b011",
 					Name:   "Banana",
 					Emoji:  "U+1F34C",
 					Season: "Summer",
 				},
 				{
-					ID:     "7",
+					ID:     "6353a9539b290040a606b012",
 					Name:   "Watermelon",
 					Emoji:  "U+1F349",
 					Season: "Summer",
@@ -309,19 +336,19 @@ func TestGetFruitsBySeason(t *testing.T) {
 			season: "SUMMER",
 			want: db.Fruits{
 				{
-					ID:     "5",
+					ID:     "6353a9539b290040a606b010",
 					Name:   "Blueberry",
 					Emoji:  "U+1FAD0",
 					Season: "Summer",
 				},
 				{
-					ID:     "6",
+					ID:     "6353a9539b290040a606b011",
 					Name:   "Banana",
 					Emoji:  "U+1F34C",
 					Season: "Summer",
 				},
 				{
-					ID:     "7",
+					ID:     "6353a9539b290040a606b012",
 					Name:   "Watermelon",
 					Emoji:  "U+1F349",
 					Season: "Summer",
@@ -332,19 +359,19 @@ func TestGetFruitsBySeason(t *testing.T) {
 			season: "suMMEr",
 			want: db.Fruits{
 				{
-					ID:     "5",
+					ID:     "6353a9539b290040a606b010",
 					Name:   "Blueberry",
 					Emoji:  "U+1FAD0",
 					Season: "Summer",
 				},
 				{
-					ID:     "6",
+					ID:     "6353a9539b290040a606b011",
 					Name:   "Banana",
 					Emoji:  "U+1F34C",
 					Season: "Summer",
 				},
 				{
-					ID:     "7",
+					ID:     "6353a9539b290040a606b012",
 					Name:   "Watermelon",
 					Emoji:  "U+1F349",
 					Season: "Summer",

@@ -23,7 +23,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/fruits": {
+        "/fruits/": {
             "get": {
                 "description": "Gets a list all available fruits from the database",
                 "produces": [
@@ -42,6 +42,24 @@ const docTemplate = `{
                                 "$ref": "#/definitions/db.Fruit"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes all the fruits from Database",
+                "tags": [
+                    "fruit"
+                ],
+                "summary": "Deletes all the fruits from Database",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -177,7 +195,7 @@ const docTemplate = `{
                 "summary": "Delete a fruit from Database",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Fruit ID",
                         "name": "id",
                         "in": "path",
