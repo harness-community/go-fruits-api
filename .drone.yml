@@ -9,6 +9,7 @@ steps:
     pull: if-not-exists
     commands:
       - golangci-lint run
+
   - name: test
     image: golang:1.18
     pull: if-not-exists
@@ -16,15 +17,13 @@ steps:
       - go clean -testcache
       - go test ./... -v
 
-  - name: Build Binaries
+  - name: build
     image: goreleaser/goreleaser
     pull: if-not-exists
-    environment:
-      CGO_ENABLED: "0"
     commands:
-      - goreleaser build --snapshot --rm-dist --debug
+      - goreleaser build --snapshot --rm-dist
 
-  - name: push image to registry
+  - name: push
     image: thegeeklab/drone-docker-buildx
     privileged: true
     pull: if-not-exists
@@ -32,7 +31,7 @@ steps:
       platforms:
         - linux/amd64
         - linux/arm64
-      context: .
+      context: dist
 
 services:
   # Default database for testing

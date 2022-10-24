@@ -19,7 +19,7 @@ builds:
       - arm64
     hooks:
       post:
-        - cmd: "./scripts/rename.py --target-arch={{ .Arch }}"
+        - cmd: ./scripts/rename.py --target-arch {{ .Target }}
 archives:
   - files:
       - LICENSE
