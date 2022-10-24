@@ -1,8 +1,6 @@
 project_name: fruits-api
-#before:
-#  hooks:
-#    - go mod tidy
-#    - go mod vendor
+gomod:
+  proxy: true
 builds:
   - id: server
     main: server.go
@@ -14,13 +12,14 @@ builds:
       - darwin
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
-    flags:
-      - -mod=vendor
     ldflags:
       - '-s -w -X main.build={{.Version}} -extldflags "-static"'
     goarch:
       - amd64
       - arm64
+    hooks:
+      post:
+        - cmd: "./scripts/rename.py --target-arch={{ .Arch }}"
 archives:
   - files:
       - LICENSE
