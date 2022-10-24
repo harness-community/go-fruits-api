@@ -1,15 +1,10 @@
-#syntax=docker/dockerfile:1.3-labs
-FROM goreleaser/goreleaser as builder
-
-WORKDIR build
-
-COPY . .
-
-RUN goreleaser build --single-target --snapshot --rm-dist --output /bin/server
+# syntax=docker/dockerfile:1.4
 
 FROM gcr.io/distroless/base
 
-COPY --from=builder /bin/server /bin/server
+ARG TARGETARCH
+
+COPY server_linux_${TARGETARCH}/server /bin/server
 
 EXPOSE 8080
 

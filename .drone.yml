@@ -9,6 +9,7 @@ steps:
     pull: if-not-exists
     commands:
       - golangci-lint run
+
   - name: test
     image: golang:1.18
     pull: if-not-exists
@@ -16,15 +17,19 @@ steps:
       - go clean -testcache
       - go test ./... -v
 
-  - name: Build Binaries
+  - name: build
     image: goreleaser/goreleaser
     pull: if-not-exists
-    environment:
-      CGO_ENABLED: "0"
     commands:
+<<<<<<< HEAD
       - goreleaser build --snapshot --rm-dist --debug
   
   - name: push image to registry
+=======
+      - goreleaser build --snapshot --rm-dist
+
+  - name: push
+>>>>>>> fa58079 (simplify multi arch build)
     image: thegeeklab/drone-docker-buildx
     privileged: true
     pull: if-not-exists
@@ -32,10 +37,30 @@ steps:
       platforms:
         - linux/amd64
         - linux/arm64
-      context: .
+      context: dist
 
 services:
+<<<<<<< HEAD
   - name: mongodb
     image: mongo
 
       
+=======
+  # Default database for testing
+  - name: postgresql
+    image: postgres:14.4-alpine
+    environment:
+      POSTGRES_PORT: 5432
+      POSTGRES_PASSWORD: pa55Word!
+      POSTGRES_USER: demo
+      POSTGRES_DB: demodb
+  # If you are using mysql/mariadb, uncomment this
+  # - name: mysql
+  #   image: mariadb
+  #   environment:
+  #     MYSQL_PORT: 3306
+  #     MYSQL_ROOT_PASSWORD: superS3cret!
+  #     MYSQL_PASSWORD: pa55Word!
+  #     MYSQL_USER: demo
+  #     MYSQL_DATABASE: demodb
+>>>>>>> fa58079 (simplify multi arch build)

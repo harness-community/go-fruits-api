@@ -1,8 +1,6 @@
 project_name: fruits-api
-#before:
-#  hooks:
-#    - go mod tidy
-#    - go mod vendor
+gomod:
+  proxy: true
 builds:
   - id: server
     main: server.go
@@ -21,6 +19,9 @@ builds:
     goarch:
       - amd64
       - arm64
+    hooks:
+      post:
+        - cmd: ./scripts/rename.py --target-arch {{ .Target }}
 archives:
   - files:
       - LICENSE
