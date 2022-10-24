@@ -12,8 +12,6 @@ builds:
       - darwin
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
-    flags:
-      - -mod=vendor
     ldflags:
       - '-s -w -X main.build={{.Version}} -extldflags "-static"'
     goarch:
