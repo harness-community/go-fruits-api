@@ -2,13 +2,14 @@ package routes
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/kameshsampath/go-fruits-api/pkg/db"
 	"github.com/kameshsampath/go-fruits-api/pkg/utils"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
 )
 
 // AddFruit godoc
@@ -86,9 +87,17 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 		utils.NewHTTPError(c, http.StatusNotFound, err)
 		return err
 	}
-	f := bson.D{{"_id", ID}} //nolint:govet
+	//make sure that we get only valid ObjectID for deletions
+	//otherwise return the error
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		log.Errorf("Error deleting fruit with ID %s, %v", ID, err)
+		utils.NewHTTPError(c, http.StatusInternalServerError, err)
+		return err
+	}
+	f := bson.D{{"_id", objID}} //nolint:govet
 	log.Infof("Deleting Fruit with id %s", ID)
-	_, err := database.Collection(e.Config.Collection).DeleteOne(ctx, f)
+	_, err = database.Collection(e.Config.Collection).DeleteOne(ctx, f)
 	if err != nil {
 		log.Errorf("Error deleting fruit with ID %s, %v", ID, err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
