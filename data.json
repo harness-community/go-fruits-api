@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Mango",
+    "season": "Spring",
+    "emoji": "U+1F96D"
+  },
+  {
+    "name": "Strawberry",
+    "season": "Spring",
+    "emoji": "U+1F353"
+  },
+  {
+    "name": "Orange",
+    "season": "Winter",
+    "emoji": "U+1F34B"
+  },
+  {
+    "name": "Lemon",
+    "season": "Winter",
+    "emoji": "U+1F34A"
+  },
+  {
+    "name": "Blueberry",
+    "season": "Summer",
+    "emoji": "U+1FAD0"
+  },
+  {
+    "name": "Banana",
+    "season": "Summer",
+    "emoji": "U+1F34C"
+  },
+  {
+    "name": "Watermelon",
+    "season": "Summer",
+    "emoji": "U+1F349"
+  },
+  {
+    "name": "Apple",
+    "season": "Fall",
+    "emoji": "U+1F34E"
+  },
+  {
+    "name": "Pear",
+    "season": "Fall",
+    "emoji": "U+1F350"
+  }
+]
