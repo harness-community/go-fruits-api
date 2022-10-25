@@ -16,6 +16,9 @@ steps:
     commands:
       - go clean -testcache
       - go test ./... -v
+    environment:
+      ## override the test connection to be local
+      QUARKUS_MONGODB_CONNECTION_STRING: "mongodb://mongodb"
 
   - name: build
     image: goreleaser/goreleaser

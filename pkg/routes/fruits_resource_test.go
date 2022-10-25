@@ -3,6 +3,14 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path"
+	"sort"
+	"strings"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kameshsampath/go-fruits-api/pkg/db"
@@ -12,13 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path"
-	"sort"
-	"strings"
-	"testing"
 )
 
 var (
@@ -71,7 +72,7 @@ func TestAddFruit(t *testing.T) {
 	}{
 		"withId": {
 			requestBody: `{
-        "_id": "6353a9539b290040a606b015",
+        "id": "6353a9539b290040a606b015",
         "name": "Test Fruit",
         "season": "Summer"
         }`,

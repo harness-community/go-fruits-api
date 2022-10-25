@@ -1,54 +1,54 @@
 [
   {
-    "_id": "6353a9539b290040a606b00c",
+    "id": "6353a9539b290040a606b00c",
     "name": "Mango",
     "season": "Spring",
     "emoji": "U+1F96D"
   },
   {
-    "_id": "6353a9539b290040a606b00d",
+    "id": "6353a9539b290040a606b00d",
     "name": "Strawberry",
     "season": "Spring",
     "emoji": "U+1F96D"
   },
   {
-    "_id": "6353a9539b290040a606b00e",
+    "id": "6353a9539b290040a606b00e",
     "name": "Orange",
     "season": "Winter",
     "emoji": "U+1F34B"
   },
   {
-    "_id": "6353a9539b290040a606b00f",
+    "id": "6353a9539b290040a606b00f",
     "name": "Lemon",
     "season": "Winter",
     "emoji": "U+1F34A"
   },
   {
-    "_id": "6353a9539b290040a606b010",
+    "id": "6353a9539b290040a606b010",
     "name": "Blueberry",
     "season": "Summer",
     "emoji": "U+1FAD0"
   },
   {
-    "_id": "6353a9539b290040a606b011",
+    "id": "6353a9539b290040a606b011",
     "name": "Banana",
     "season": "Summer",
     "emoji": "U+1F34C"
   },
   {
-    "_id": "6353a9539b290040a606b012",
+    "id": "6353a9539b290040a606b012",
     "name": "Watermelon",
     "season": "Summer",
     "emoji": "U+1F349"
   },
   {
-    "_id": "6353a9539b290040a606b013",
+    "id": "6353a9539b290040a606b013",
     "name": "Apple",
     "season": "Fall",
     "emoji": "U+1F34E"
   },
   {
-    "_id": "6353a9539b290040a606b014",
+    "id": "6353a9539b290040a606b014",
     "name": "Pear",
     "season": "Fall",
     "emoji": "U+1F350"
