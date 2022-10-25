@@ -19,21 +19,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
-	testData = []interface{}{
-		bson.D{{"_id", "6353a9539b290040a606b00c"}, {"name", "Mango"}, {"season", "Spring"}, {"emoji", "U+1F96D"}},      //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b00d"}, {"name", "Strawberry"}, {"season", "Spring"}, {"emoji", "U+1F96D"}}, //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b00e"}, {"name", "Orange"}, {"season", "Winter"}, {"emoji", "U+1F34B"}},     //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b00f"}, {"name", "Lemon"}, {"season", "Winter"}, {"emoji", "U+1F34A"}},      //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b010"}, {"name", "Blueberry"}, {"season", "Summer"}, {"emoji", "U+1FAD0"}},  //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b011"}, {"name", "Banana"}, {"season", "Summer"}, {"emoji", "U+1F34C"}},     //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b012"}, {"name", "Watermelon"}, {"season", "Summer"}, {"emoji", "U+1F349"}}, //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b013"}, {"name", "Apple"}, {"season", "Fall"}, {"emoji", "U+1F34E"}},        //nolint:govet
-		bson.D{{"_id", "6353a9539b290040a606b014"}, {"name", "Pear"}, {"season", "Fall"}, {"emoji", "U+1F350"}},         //nolint:govet
-	}
 	log *logrus.Logger
 )
 
@@ -51,6 +41,10 @@ func loadFixtures() (*db.Config, error) {
 
 	//Clear existing data before starting any new tests
 	dbc.DB.Collection(dbc.Collection).Drop(dbc.Ctx)
+	testData, err := buildTestData()
+	if err != nil {
+		return nil, err
+	}
 	_, err = dbc.DB.Collection(dbc.Collection).InsertMany(dbc.Ctx, testData)
 
 	if err != nil {
@@ -58,6 +52,33 @@ func loadFixtures() (*db.Config, error) {
 	}
 
 	return dbc, nil
+}
+
+func buildTestData() (testData []interface{}, err error) {
+	cwd, _ := os.Getwd()
+	b, err := os.ReadFile(path.Join(cwd, "testdata", "data.json"))
+	if err != nil {
+		return nil, err
+	}
+	var fruits = &db.Fruits{}
+	if err := json.Unmarshal(b, fruits); err != nil {
+		return nil, err
+	}
+
+	for _, f := range *fruits {
+		objID, err := primitive.ObjectIDFromHex(f.ID.(string))
+		if err != nil {
+			return nil, err
+		}
+		testData = append(testData, bson.D{
+			{"_id", objID},
+			{"name", f.Name},
+			{"season", f.Season},
+			{"emoji", f.Emoji},
+		}) //nolint:govet
+	}
+
+	return testData, err
 }
 
 func TestAddFruit(t *testing.T) {
