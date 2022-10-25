@@ -95,7 +95,7 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
 		return err
 	}
-	f := bson.D{{"_id", objID}} //nolint:govet
+	f := bson.D{{Key: "_id", Value: objID}}
 	log.Infof("Deleting Fruit with id %s", ID)
 	_, err = database.Collection(e.Config.Collection).DeleteOne(ctx, f)
 	if err != nil {
@@ -150,7 +150,7 @@ func (e *Endpoints) ListFruits(c echo.Context) error {
 		Find(ctx, bson.D{},
 			options.
 				Find().
-				SetSort(bson.D{{"name", 1}})) //nolint:govet
+				SetSort(bson.D{{Key: "name", Value: 1}})) //nolint:govet
 	if err != nil {
 		log.Errorf("Error getting all fruits, %v", err)
 		utils.NewHTTPError(c, http.StatusInternalServerError, err)
@@ -183,10 +183,10 @@ func (e *Endpoints) fruitFinder(c echo.Context, filterBy string) error {
 		Pattern: filterV,
 		Options: "i"}
 	filter := bson.D{
-		{ //nolint:govet
-			filterBy,
-			bson.D{
-				{"$regex", p}, //nolint:govet
+		{
+			Key: filterBy,
+			Value: bson.D{
+				{Key: "$regex", Value: p},
 			},
 		},
 	}

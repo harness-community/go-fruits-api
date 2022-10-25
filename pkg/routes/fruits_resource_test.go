@@ -71,11 +71,11 @@ func buildTestData() (testData []interface{}, err error) {
 			return nil, err
 		}
 		testData = append(testData, bson.D{
-			{"_id", objID},
-			{"name", f.Name},
-			{"season", f.Season},
-			{"emoji", f.Emoji},
-		}) //nolint:govet
+			{Key: "_id", Value: objID},
+			{Key: "name", Value: f.Name},
+			{Key: "season", Value: f.Season},
+			{Key: "emoji", Value: f.Emoji},
+		})
 	}
 
 	return testData, err
