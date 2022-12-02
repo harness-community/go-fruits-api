@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-drone secret rm --name KO_DOCKER_REPO harness-apps/go-fruits-api
+drone secret rm --name ko_docker_repo harness-apps/go-fruits-api
 
-drone secret rm --name IMAGE_REGISTRY_USER harness-apps/go-fruits-api
+drone secret rm --name image_registry_user harness-apps/go-fruits-api
 
-drone secret rm --name IMAGE_REGISTRY_PASSWORD harness-apps/go-fruits-api
+drone secret rm --name image_registry_password harness-apps/go-fruits-api
