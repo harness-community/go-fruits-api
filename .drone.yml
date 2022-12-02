@@ -3,51 +3,59 @@ kind: pipeline
 type: docker
 name: default
 
+trigger:
+  branch:
+   - ko
+  event:
+   - push
+   - tag
+
 steps:
   - name: lint
     image: golangci/golangci-lint
     pull: if-not-exists
     commands:
       - golangci-lint run
-
+  
+  - name: wait for db
+    image: mariadb
+    commands:
+      - until mariadb-admin --host=mysql --user=demo --password=password --port=3306 ping; do sleep 3; done;
+  
   - name: test
     image: golang:1.18
     pull: if-not-exists
     commands:
       - go clean -testcache
-      - go test ./... -v
-
-  - name: build
-    image: goreleaser/goreleaser
-    pull: if-not-exists
-    commands:
-      - goreleaser build --snapshot --rm-dist
+      - go test -timeout 30s -v ./... 
 
   - name: push
-    image: thegeeklab/drone-docker-buildx
-    privileged: true
+    image: kameshsampath/kube-dev-tools:0.1.3
     pull: if-not-exists
-    settings:
-      platforms:
-        - linux/amd64
-        - linux/arm64
-      context: dist
+    commands:
+      - |
+        echo -n "$IMAGE_REGISTRY_PASSWORD" \
+          | ko login docker.io -u "$IMAGE_REGISTRY_USER" --password-stdin
+      - |
+        ko build --platform=linux/amd64 \
+          --platform=linux/arm64 \
+          --bare .
 
 services:
-  # Default database for testing
-  - name: postgresql
-    image: postgres:14.4-alpine
-    environment:
-      POSTGRES_PORT: 5432
-      POSTGRES_PASSWORD: pa55Word!
-      POSTGRES_USER: demo
-      POSTGRES_DB: demodb
-  # If you are using mysql/mariadb, uncomment this
-  # - name: mysql
-  #   image: mariadb
+  # If you are using postgresql, uncomment this
+  # - name: postgresql
+  #   image: postgres:14.4-alpine
   #   environment:
-  #     MYSQL_PORT: 3306
-  #     MYSQL_ROOT_PASSWORD: superS3cret!
-  #     MYSQL_PASSWORD: pa55Word!
-  #     MYSQL_USER: demo
-  #     MYSQL_DATABASE: demodb
+  #     POSTGRES_PORT: 5432
+  #     POSTGRES_PASSWORD: pa55Word!
+  #     POSTGRES_USER: demo
+  #     POSTGRES_DB: demodb
+  # If you are using mysql/mariadb, uncomment this
+  - name: mysql
+    image: mariadb
+    environment:
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: superS3cret!
+      MYSQL_PASSWORD: pa55Word!
+      MYSQL_USER: demo
+      MYSQL_DATABASE: demodb
