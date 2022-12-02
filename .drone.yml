@@ -27,6 +27,7 @@ steps:
     pull: if-not-exists
     environment:
       FRUITS_DB_TYPE: mysql
+      MYSQL_HOST: "mysql"
       MYSQL_PORT: 3306
       MYSQL_ROOT_PASSWORD: superS3cret!
       MYSQL_PASSWORD: pa55Word!
