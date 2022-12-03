@@ -10,6 +10,16 @@ trigger:
    - push
    - tag
 
+services:
+  - name: mysql
+    image: mariadb
+    environment:
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: superS3cret!
+      MYSQL_PASSWORD: pa55Word!
+      MYSQL_USER: demo
+      MYSQL_DATABASE: demodb
+
 steps:
   - name: lint
     image: golangci/golangci-lint
@@ -47,21 +57,17 @@ steps:
         from_secret: image_registry_user
       IMAGE_REGISTRY_PASSWORD:
         from_secret: image_registry_password
+      GCP_IDENTITY_TOKEN:
+        from_secret: gcp_id_token
+      # required for keyless signing
+      COSIGN_EXPERIMENTAL: 1
     commands:
       - |
         echo -n "$IMAGE_REGISTRY_PASSWORD" \
           | ko login docker.io -u "$IMAGE_REGISTRY_USER" --password-stdin
       - |
-        ko build --platform=linux/amd64 \
+        export IMAGE_REF=$(ko build --platform=linux/amd64 \
           --platform=linux/arm64 \
-          --bare .
-
-services:
-  - name: mysql
-    image: mariadb
-    environment:
-      MYSQL_PORT: 3306
-      MYSQL_ROOT_PASSWORD: superS3cret!
-      MYSQL_PASSWORD: pa55Word!
-      MYSQL_USER: demo
-      MYSQL_DATABASE: demodb
+          --bare .)
+      # - |
+      #   cosign sign --identity-token="$GCP_IDENTITY_TOKEN" "$IMAGE_REF"
