@@ -74,7 +74,7 @@ func New(options ...Option) *Config {
 }
 
 // Init initializes the database with the given configuration
-func (c *Config) Init() *bun.DB {
+func (c *Config) Init() {
 	log := c.Log
 	log.Infof("Initializing DB of type %s", c.DBType)
 	var db *bun.DB
@@ -116,8 +116,6 @@ func (c *Config) Init() *bun.DB {
 	if err := c.createTables(); err != nil {
 		log.Errorf("%s", err)
 	}
-
-	return c.DB
 }
 
 func (c *Config) createTables() error {
