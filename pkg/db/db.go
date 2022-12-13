@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -26,7 +25,6 @@ import (
 
 // Config configures the database to initialize
 type Config struct {
-	dbOnce sync.Once
 	Log    *logrus.Logger
 	DBFile string
 	DB     *bun.DB
@@ -77,49 +75,47 @@ func New(options ...Option) *Config {
 
 // Init initializes the database with the given configuration
 func (c *Config) Init() *bun.DB {
-	c.dbOnce.Do(func() {
-		log := c.Log
-		log.Infof("Initializing DB of type %s", c.DBType)
-		var db *bun.DB
-		switch c.DBType {
-		case dialect.PG:
-			pgConn := buildPGConnector()
-			sqldb := sql.OpenDB(pgConn)
-			db = bun.NewDB(sqldb, pgdialect.New())
-		case dialect.MySQL:
-			sqldb, err := sql.Open("mysql", buildMYSQLDSN())
-			if err != nil {
-				log.Fatal(err)
-			}
-			db = bun.NewDB(sqldb, mysqldialect.New())
-			db.SetConnMaxLifetime(time.Minute * 3)
-			db.SetMaxOpenConns(10)
-			db.SetMaxIdleConns(10)
-		default:
-			sqlite, err := sql.Open(sqliteshim.ShimName, fmt.Sprintf("file:%s?cache=shared", c.DBFile))
-			if err != nil {
-				log.Fatal(err)
-			}
-			db = bun.NewDB(sqlite, sqlitedialect.New())
-		}
-
-		if err := db.Ping(); err != nil {
+	log := c.Log
+	log.Infof("Initializing DB of type %s", c.DBType)
+	var db *bun.DB
+	switch c.DBType {
+	case dialect.PG:
+		pgConn := buildPGConnector()
+		sqldb := sql.OpenDB(pgConn)
+		db = bun.NewDB(sqldb, pgdialect.New())
+	case dialect.MySQL:
+		sqldb, err := sql.Open("mysql", buildMYSQLDSN())
+		if err != nil {
 			log.Fatal(err)
 		}
-
-		isVerbose := log.Level == logrus.DebugLevel || log.Level == logrus.TraceLevel
-		db.AddQueryHook(bundebug.NewQueryHook(
-			bundebug.WithVerbose(isVerbose),
-			bundebug.WithVerbose(isVerbose),
-		))
-
-		c.DB = db
-
-		//Setup Schema
-		if err := c.createTables(); err != nil {
-			log.Errorf("%s", err)
+		db = bun.NewDB(sqldb, mysqldialect.New())
+		db.SetConnMaxLifetime(time.Minute * 3)
+		db.SetMaxOpenConns(10)
+		db.SetMaxIdleConns(10)
+	default:
+		sqlite, err := sql.Open(sqliteshim.ShimName, fmt.Sprintf("file:%s?cache=shared", c.DBFile))
+		if err != nil {
+			log.Fatal(err)
 		}
-	})
+		db = bun.NewDB(sqlite, sqlitedialect.New())
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
+	isVerbose := log.Level == logrus.DebugLevel || log.Level == logrus.TraceLevel
+	db.AddQueryHook(bundebug.NewQueryHook(
+		bundebug.WithVerbose(isVerbose),
+		bundebug.WithVerbose(isVerbose),
+	))
+
+	c.DB = db
+
+	//Setup Schema
+	if err := c.createTables(); err != nil {
+		log.Errorf("%s", err)
+	}
 
 	return c.DB
 }
