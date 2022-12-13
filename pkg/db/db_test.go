@@ -28,6 +28,8 @@ func TestInitDB(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	dbc.DB.RegisterModel((*Fruit)(nil))
+
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
 	if err := dbfx.Load(dbc.Ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		t.Fatalf("Unable to load fixtures, %s", err)
