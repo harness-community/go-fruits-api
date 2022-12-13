@@ -57,7 +57,6 @@ func main() {
 	ctx := context.Background()
 	log = utils.LogSetup(os.Stdout, v)
 	dbc := db.New(
-		db.WithContext(ctx),
 		db.WithLogger(log),
 		db.WithDBType(dbType),
 		db.WithDBFile(dbFile))
@@ -69,7 +68,7 @@ func main() {
 	if dataDir != "" && errors.Is(err, os.ErrNotExist) {
 		log.Info("Attempting to preload data")
 		fixtures := dbfixture.New(dbc.DB, dbfixture.WithTruncateTables())
-		if err := fixtures.Load(dbc.Ctx, os.DirFS(dataDir), "data.yaml"); err != nil {
+		if err := fixtures.Load(ctx, os.DirFS(dataDir), "data.yaml"); err != nil {
 			log.Warnf("unable to preload the data,%v", err)
 		}
 		_, err := os.Create(path.Join("/data", "db", ".loaded"))

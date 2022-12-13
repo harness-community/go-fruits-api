@@ -41,7 +41,6 @@ func loadFixtures() (*db.Config, error) {
 	log = utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
 	ctx := context.TODO()
 	dbc := db.New(
-		db.WithContext(ctx),
 		db.WithLogger(log),
 		db.WithDBType(utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")),
 		db.WithDBFile(getDBFile("test")))
@@ -53,7 +52,7 @@ func loadFixtures() (*db.Config, error) {
 
 	dbc.DB.RegisterModel((*db.Fruit)(nil))
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
-	if err := dbfx.Load(dbc.Ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
+	if err := dbfx.Load(ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		return nil, err
 	}
 

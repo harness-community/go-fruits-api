@@ -4,11 +4,25 @@ type: docker
 name: default
 
 steps:
+
   - name: lint
     image: golangci/golangci-lint
     pull: if-not-exists
     commands:
       - golangci-lint run
+
+  # - name: wait for postgres
+  #   image: postgres:14.4-alpine
+  #   environment:
+  #     PGHOST: postgres
+  #     PGPORT: 5432
+  #   commands:
+  #     - until pg_isready --host=$PGHOST --port=$PGPORT; do sleep 2; done
+
+  - name: wait for mysql 
+    image: mariadb
+    commands:
+      - until mariadb-admin --host=$MYSQL_HOST --user=$MYSQL_USER --password=$MYSQL_PASSWORD --port=$MYSQL_PORt ping; do sleep 3; done;
 
   - name: test
     image: golang:1.18
@@ -33,7 +47,7 @@ steps:
     settings:
       context: dist
 
-services: []
+services:
   # Default database for testing is SQLite
   # - name: postgresql
   #   image: postgres:14.4-alpine
@@ -43,11 +57,11 @@ services: []
   #     POSTGRES_USER: demo
   #     POSTGRES_DB: demodb
   # If you are using mysql/mariadb, uncomment this
-  # - name: mysql
-  #   image: mariadb
-  #   environment:
-  #     MYSQL_PORT: 3306
-  #     MYSQL_ROOT_PASSWORD: superS3cret!
-  #     MYSQL_PASSWORD: pa55Word!
-  #     MYSQL_USER: demo
-  #     MYSQL_DATABASE: demodb
+  - name: mysql
+    image: mariadb
+    environment:
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: superS3cret!
+      MYSQL_PASSWORD: pa55Word!
+      MYSQL_USER: demo
+      MYSQL_DATABASE: demodb

@@ -25,7 +25,7 @@ import (
 // @Router /fruits/add [post]
 func (e *Endpoints) AddFruit(c echo.Context) error {
 	log := e.Config.Log
-	ctx := e.Config.Ctx
+	ctx := context.Background()
 	dbConn := e.Config.DB
 	f := &db.Fruit{}
 	if err := c.Bind(f); err != nil {
@@ -61,7 +61,7 @@ func (e *Endpoints) AddFruit(c echo.Context) error {
 // @Router /fruits/{id} [delete]
 func (e *Endpoints) DeleteFruit(c echo.Context) error {
 	log := e.Config.Log
-	ctx := e.Config.Ctx
+	ctx := context.Background()
 	dbConn := e.Config.DB
 	var ID int
 	if err := echo.PathParamsBinder(c).
@@ -106,7 +106,7 @@ func (e *Endpoints) DeleteFruit(c echo.Context) error {
 // @Router /fruits/ [delete]
 func (e *Endpoints) DeleteAll(c echo.Context) error {
 	log := e.Config.Log
-	ctx := e.Config.Ctx
+	ctx := context.Background()
 	dbConn := e.Config.DB
 
 	log.Infoln("Deleting all fruits")
@@ -147,7 +147,7 @@ func (e *Endpoints) GetFruitsByName(c echo.Context) error {
 		return err
 	}
 	log.Infof("Getting Fruit with name %s", name)
-	ctx := e.Config.Ctx
+	ctx := context.Background()
 	dbConn := e.Config.DB
 	var fruits = &db.Fruits{}
 	if err := dbConn.NewSelect().
@@ -181,7 +181,7 @@ func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 		return err
 	}
 	log.Infof("Getting Fruit for season %s", season)
-	ctx := e.Config.Ctx
+	ctx := context.Background()
 	dbConn := e.Config.DB
 	var fruits = &db.Fruits{}
 	if err := dbConn.NewSelect().
@@ -207,7 +207,7 @@ func (e *Endpoints) GetFruitsBySeason(c echo.Context) error {
 func (e *Endpoints) ListFruits(c echo.Context) error {
 	log := e.Config.Log
 	log.Infoln("Getting All Fruits ")
-	ctx := e.Config.Ctx
+	ctx := context.Background()
 	dbConn := e.Config.DB
 	var fruits = &db.Fruits{}
 	if err := dbConn.NewSelect().

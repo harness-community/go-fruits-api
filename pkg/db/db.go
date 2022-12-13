@@ -26,7 +26,6 @@ import (
 
 // Config configures the database to initialize
 type Config struct {
-	Ctx    context.Context
 	dbOnce sync.Once
 	Log    *logrus.Logger
 	DBFile string
@@ -35,15 +34,6 @@ type Config struct {
 }
 
 type Option func(*Config)
-
-func WithContext(ctx context.Context) Option {
-	return func(c *Config) {
-		if ctx == nil {
-			ctx = context.Background()
-		}
-		c.Ctx = ctx
-	}
-}
 
 func WithLogger(log *logrus.Logger) Option {
 	return func(c *Config) {
@@ -139,7 +129,7 @@ func (c *Config) createTables() error {
 	if _, err := c.DB.NewCreateTable().
 		Model((*Fruit)(nil)).
 		IfNotExists().
-		Exec(c.Ctx); err != nil {
+		Exec(context.Background()); err != nil {
 		return err
 	}
 	return nil
