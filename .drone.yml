@@ -25,11 +25,11 @@ steps:
       - until mariadb-admin --host=$MYSQL_HOST --user=$MYSQL_USER --password=$MYSQL_PASSWORD --port=$MYSQL_PORt ping; do sleep 3; done;
 
   - name: test
-    image: golang:1.18
+    image: golang:1.19
     pull: if-not-exists
     commands:
       - go clean -testcache
-      - go test ./... -v
+      - go test -race ./... -v
 
   - name: build
     image: goreleaser/goreleaser
