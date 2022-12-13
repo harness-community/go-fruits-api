@@ -15,10 +15,19 @@ import (
 func TestInitDB(t *testing.T) {
 	log := utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
 	ctx := context.TODO()
-	dbc := New(
-		WithLogger(log),
-		WithDBType(utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")),
-		WithDBFile("testdata/test.db"))
+	dbt := utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")
+	var dbc *Config
+	if dbt == "sqlite" {
+		dbc = New(
+			WithLogger(log),
+			WithDBType(dbt),
+			WithDBFile("testdata/test.db"))
+	} else {
+		dbc = New(
+			WithLogger(log),
+			WithDBType(dbt))
+	}
+
 	dbc.Init()
 
 	err := dbc.DB.Ping()
