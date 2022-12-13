@@ -39,11 +39,18 @@ func getDBFile(dbName string) string {
 
 func loadFixtures() (*db.Config, error) {
 	log = utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
-	ctx := context.TODO()
-	dbc := db.New(
-		db.WithLogger(log),
-		db.WithDBType(utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")),
-		db.WithDBFile(getDBFile("test")))
+	dbt := utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")
+	var dbc *db.Config
+	if dbt == "sqlite" {
+		dbc = db.New(
+			db.WithLogger(log),
+			db.WithDBType(dbt),
+			db.WithDBFile("testdata/test.db"))
+	} else {
+		dbc = db.New(
+			db.WithLogger(log),
+			db.WithDBType(dbt))
+	}
 	dbc.Init()
 
 	if err := dbc.DB.Ping(); err != nil {
@@ -52,7 +59,7 @@ func loadFixtures() (*db.Config, error) {
 
 	dbc.DB.RegisterModel((*db.Fruit)(nil))
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
-	if err := dbfx.Load(ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
+	if err := dbfx.Load(context.Background(), os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		return nil, err
 	}
 
@@ -143,10 +150,9 @@ func TestDeleteAllFruit(t *testing.T) {
 	if assert.NoError(t, ep.DeleteAll(c)) {
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 		dbConn := ep.Config.DB
-		ctx := context.TODO()
 		c, err := dbConn.NewSelect().
 			Model((*db.Fruit)(nil)).
-			Count(ctx)
+			Count(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -175,12 +181,11 @@ func TestDeleteFruit(t *testing.T) {
 	if assert.NoError(t, ep.DeleteFruit(c)) {
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 		dbConn := ep.Config.DB
-		ctx := context.TODO()
 		ID, _ := strconv.Atoi(fruitID)
 		exists, err := dbConn.NewSelect().
 			Model(&db.Fruit{ID: ID}).
 			WherePK().
-			Exists(ctx)
+			Exists(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}

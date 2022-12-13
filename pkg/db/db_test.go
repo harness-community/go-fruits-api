@@ -14,7 +14,6 @@ import (
 
 func TestInitDB(t *testing.T) {
 	log := utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
-	ctx := context.TODO()
 	dbt := utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")
 	var dbc *Config
 	if dbt == "sqlite" {
@@ -39,7 +38,7 @@ func TestInitDB(t *testing.T) {
 	dbc.DB.RegisterModel((*Fruit)(nil))
 
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
-	if err := dbfx.Load(ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
+	if err := dbfx.Load(context.Background(), os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		t.Fatalf("Unable to load fixtures, %s", err)
 	}
 
@@ -51,7 +50,7 @@ func TestInitDB(t *testing.T) {
 	err = dbc.DB.NewSelect().
 		Model(actual).
 		Where("? = ?", bun.Ident("name"), "Mango").
-		Scan(ctx)
+		Scan(context.Background())
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, 1, "Expected ID to be  %d but got %d", 1, actual.ID)
@@ -69,7 +68,7 @@ func TestInitDB(t *testing.T) {
 		seqQuery = "SELECT ROWID from FRUITS order by ROWID DESC limit 1"
 	}
 
-	err = dbc.DB.NewRaw(seqQuery).Scan(ctx, &lastID)
+	err = dbc.DB.NewRaw(seqQuery).Scan(context.Background(), &lastID)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, 1, "Expected Last Sequential ID to be  %d but got %d", 9, lastID)
