@@ -30,7 +30,7 @@ func TestInitDB(t *testing.T) {
 
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
 	if err := dbfx.Load(dbc.Ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
-		t.Fatal(err)
+		t.Fatalf("Unable to load fixtures, %s", err)
 	}
 
 	expected := dbfx.MustRow("Fruit.mango").(*Fruit)
@@ -42,10 +42,7 @@ func TestInitDB(t *testing.T) {
 		Model(actual).
 		Where("? = ?", bun.Ident("name"), "Mango").
 		Scan(dbc.Ctx)
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	assert.Equal(t, 1, 1, "Expected ID to be  %d but got %d", 1, actual.ID)
 	assert.Equal(t, expected.Name, actual.Name, "Expected Name to be  %s but got %s", expected.Name, actual.Name)
@@ -63,10 +60,7 @@ func TestInitDB(t *testing.T) {
 	}
 
 	err = dbc.DB.NewRaw(seqQuery).Scan(dbc.Ctx, &lastID)
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	assert.Equal(t, 1, 1, "Expected Last Sequential ID to be  %d but got %d", 9, lastID)
 

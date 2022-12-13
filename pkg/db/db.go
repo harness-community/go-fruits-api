@@ -127,7 +127,7 @@ func (c *Config) Init() *bun.DB {
 
 		//Setup Schema
 		if err := c.createTables(); err != nil {
-			log.Fatal(err)
+			log.Errorf("%s", err)
 		}
 	})
 
