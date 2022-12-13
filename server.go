@@ -60,7 +60,7 @@ func main() {
 		db.WithLogger(log),
 		db.WithDBType(dbType),
 		db.WithDBFile(dbFile))
-	dbc.Init()
+	dbc.Init(ctx)
 
 	//marker file to ensure we don't preload the data again on each
 	//update of the application

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/kameshsampath/go-fruits-api/pkg/utils"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,10 @@ func TestInitDB(t *testing.T) {
 			WithDBType(dbt))
 	}
 
-	dbc.Init()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	dbc.Init(ctx)
 
 	err := dbc.DB.Ping()
 
@@ -38,7 +42,7 @@ func TestInitDB(t *testing.T) {
 	dbc.DB.RegisterModel((*Fruit)(nil))
 
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
-	if err := dbfx.Load(context.Background(), os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
+	if err := dbfx.Load(ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		t.Fatalf("Unable to load fixtures, %s", err)
 	}
 

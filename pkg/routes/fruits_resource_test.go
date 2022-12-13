@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/kameshsampath/go-fruits-api/pkg/db"
 	"github.com/kameshsampath/go-fruits-api/pkg/utils"
@@ -37,7 +38,7 @@ func getDBFile(dbName string) string {
 	return path.Join(cwd, "testdata", fmt.Sprintf("%s.db", dbName))
 }
 
-func loadFixtures() (*db.Config, error) {
+func loadFixtures(ctx context.Context) (*db.Config, error) {
 	log = utils.LogSetup(os.Stdout, utils.LookupEnvOrString("TEST_LOG_LEVEL", "info"))
 	dbt := utils.LookupEnvOrString("FRUITS_DB_TYPE", "sqlite")
 	var dbc *db.Config
@@ -51,7 +52,7 @@ func loadFixtures() (*db.Config, error) {
 			db.WithLogger(log),
 			db.WithDBType(dbt))
 	}
-	dbc.Init()
+	dbc.Init(ctx)
 
 	if err := dbc.DB.Ping(); err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func loadFixtures() (*db.Config, error) {
 
 	dbc.DB.RegisterModel((*db.Fruit)(nil))
 	dbfx := dbfixture.New(dbc.DB, dbfixture.WithRecreateTables())
-	if err := dbfx.Load(context.Background(), os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
+	if err := dbfx.Load(ctx, os.DirFS("."), "testdata/fixtures.yaml"); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +68,10 @@ func loadFixtures() (*db.Config, error) {
 }
 
 func TestAddFruit(t *testing.T) {
-	dbc, err := loadFixtures()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	dbc, err := loadFixtures(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +121,6 @@ func TestAddFruit(t *testing.T) {
 			if c := e.NewContext(req, rec); assert.NoError(t, ep.AddFruit(c)) {
 				assert.Equal(t, tc.statusCode, rec.Code)
 				dbConn := ep.Config.DB
-				ctx := context.TODO()
 				err := dbConn.NewSelect().
 					Model(&got).
 					Where("name = ?", tc.want.Name).
@@ -135,7 +138,9 @@ func TestAddFruit(t *testing.T) {
 }
 
 func TestDeleteAllFruit(t *testing.T) {
-	dbc, err := loadFixtures()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	dbc, err := loadFixtures(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,8 +167,10 @@ func TestDeleteAllFruit(t *testing.T) {
 }
 
 func TestDeleteFruit(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	fruitID := "5"
-	dbc, err := loadFixtures()
+	dbc, err := loadFixtures(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +192,7 @@ func TestDeleteFruit(t *testing.T) {
 		exists, err := dbConn.NewSelect().
 			Model(&db.Fruit{ID: ID}).
 			WherePK().
-			Exists(context.Background())
+			Exists(ctx)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -243,7 +250,9 @@ func TestGetFruitByName(t *testing.T) {
 			},
 		},
 	}
-	dbc, err := loadFixtures()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	dbc, err := loadFixtures(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -376,7 +385,9 @@ func TestGetFruitsBySeason(t *testing.T) {
 			},
 		},
 	}
-	dbc, err := loadFixtures()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	dbc, err := loadFixtures(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -412,7 +423,9 @@ func TestGetFruitsBySeason(t *testing.T) {
 }
 
 func TestGetAllFruits(t *testing.T) {
-	dbc, err := loadFixtures()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	dbc, err := loadFixtures(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
