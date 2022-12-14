@@ -31,21 +31,12 @@ steps:
       - go clean -testcache
       - go test -race ./... -v
 
-  - name: build
-    image: goreleaser/goreleaser
+  - name: build and push
+    image: kameshsampath/kube-dev-tools:0.1.4
     pull: if-not-exists
     commands:
-      - goreleaser build --snapshot --rm-dist
-
-  - name: push
-    image: plugins/docker
-    pull: if-not-exists
-    environment:
-      # enable docker buildkit
-      # https://docs.docker.com/develop/develop-images/build_enhancements/#to-enable-buildkit-builds
-      DOCKER_BUILDKIT: "1"
-    settings:
-      context: dist
+      - echo -n "$DOCKER_HUB_PASSWORD" | ko auth login docker.io -u "$DOCKER_HUB_USERNAME" --password-stdin
+      - ko build --bare --platform linux/amd64 --platform linux/arm64 .
 
 services:
   # Default database for testing is SQLite
