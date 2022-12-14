@@ -45,3 +45,4 @@ dist
 work
 .env*
 .envrc.local
+cosign*
