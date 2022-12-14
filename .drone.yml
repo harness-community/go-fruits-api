@@ -19,10 +19,10 @@ steps:
   #   commands:
   #     - until pg_isready --host=$PGHOST --port=$PGPORT; do sleep 2; done
 
-  - name: wait for mysql 
-    image: mariadb
-    commands:
-      - until mariadb-admin --host=$MYSQL_HOST --user=$MYSQL_USER --password=$MYSQL_PASSWORD --port=$MYSQL_PORt ping; do sleep 3; done;
+  # - name: wait for mysql 
+  #   image: mariadb
+  #   commands:
+  #     - until mariadb-admin --host=$MYSQL_HOST --user=$MYSQL_USER --password=$MYSQL_PASSWORD --port=$MYSQL_PORt ping; do sleep 3; done;
 
   - name: test
     image: golang:1.19
@@ -38,7 +38,7 @@ steps:
       - echo -n "$DOCKER_HUB_PASSWORD" | ko auth login docker.io -u "$DOCKER_HUB_USERNAME" --password-stdin
       - ko build --bare --platform linux/amd64 --platform linux/arm64 .
 
-services:
+services: []
   # Default database for testing is SQLite
   # - name: postgresql
   #   image: postgres:14.4-alpine
@@ -48,11 +48,11 @@ services:
   #     POSTGRES_USER: demo
   #     POSTGRES_DB: demodb
   # If you are using mysql/mariadb, uncomment this
-  - name: mysql
-    image: mariadb
-    environment:
-      MYSQL_PORT: 3306
-      MYSQL_ROOT_PASSWORD: superS3cret!
-      MYSQL_PASSWORD: pa55Word!
-      MYSQL_USER: demo
-      MYSQL_DATABASE: demodb
+  # - name: mysql
+  #   image: mariadb
+  #   environment:
+  #     MYSQL_PORT: 3306
+  #     MYSQL_ROOT_PASSWORD: superS3cret!
+  #     MYSQL_PASSWORD: pa55Word!
+  #     MYSQL_USER: demo
+  #     MYSQL_DATABASE: demodb
