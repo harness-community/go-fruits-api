@@ -20,21 +20,12 @@ steps:
       ## override the test connection to be local
       QUARKUS_MONGODB_CONNECTION_STRING: "mongodb://mongodb"
 
-  - name: build
-    image: goreleaser/goreleaser
+  - name: build and push
+    image: kameshsampath/kube-dev-tools:0.1.4
     pull: if-not-exists
     commands:
-      - goreleaser build --snapshot --rm-dist
-
-  - name: push
-    image: thegeeklab/drone-docker-buildx
-    privileged: true
-    pull: if-not-exists
-    settings:
-      platforms:
-        - linux/amd64
-        - linux/arm64
-      context: dist
+      - echo -n "$DOCKER_HUB_PASSWORD" | ko auth login docker.io -u "$DOCKER_HUB_USERNAME" --password-stdin
+      - ko build --bare --platform linux/amd64 --platform linux/arm64 .
 
 services:
   - name: mongodb
