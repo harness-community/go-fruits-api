@@ -11,18 +11,27 @@ steps:
     commands:
       - golangci-lint run
 
-  # - name: wait for postgres
-  #   image: postgres:14.4-alpine
-  #   environment:
-  #     PGHOST: postgres
-  #     PGPORT: 5432
-  #   commands:
-  #     - until pg_isready --host=$PGHOST --port=$PGPORT; do sleep 2; done
+  - name: wait for postgres
+    image: postgres:14.4-alpine
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+    commands:
+      - until pg_isready --host=$PGHOST --port=$PGPORT; do sleep 2; done
 
-  # - name: wait for mysql 
-  #   image: mariadb
-  #   commands:
-  #     - until mariadb-admin --host=$MYSQL_HOST --user=$MYSQL_USER --password=$MYSQL_PASSWORD --port=$MYSQL_PORt ping; do sleep 3; done;
+  - name: env info
+    image: alpine:3
+    pull: if-not-exists
+    environment:
+      COMBINED_VAR: ${DRONE_COMMIT_AUTHOR} ${DRONE_COMMIT_BRANCH}
+    commands:
+      - echo DRONE_BRANCH is $DRONE_BRANCH
+      - echo DRONE_BUILD_NUMBER is $DRONE_BUILD_NUMBER
+      - echo DRONE_COMMIT_SHA is $DRONE_COMMIT_SHA
+      - echo DRONE_PULL_REQUEST is $DRONE_PULL_REQUEST
+      - echo DRONE_PULL_REQUEST_TITLE is $DRONE_PULL_REQUEST_TITLE
+      - echo DRONE_REMOTE_URL is $DRONE_REMOTE_URL
+      - echo DRONE_REPO_NAME is $DRONE_REPO_NAME
 
   - name: test
     image: golang:1.19
@@ -31,28 +40,42 @@ steps:
       - go clean -testcache
       - go test -race ./... -v
 
-  - name: build and push
-    image: kameshsampath/kube-dev-tools:0.1.4
+  - name: build
+    image: golang:1.19
     pull: if-not-exists
     commands:
-      - echo -n "$DOCKER_HUB_PASSWORD" | ko auth login docker.io -u "$DOCKER_HUB_USERNAME" --password-stdin
-      - ko build --bare --platform linux/amd64 --platform linux/arm64 .
+      - go build -ldflags "-extldflags=-static" -o release/linux/amd64/harness-migrate
 
-services: []
-  # Default database for testing is SQLite
-  # - name: postgresql
-  #   image: postgres:14.4-alpine
-  #   environment:
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_PASSWORD: pa55Word!
-  #     POSTGRES_USER: demo
-  #     POSTGRES_DB: demodb
-  # If you are using mysql/mariadb, uncomment this
-  # - name: mysql
-  #   image: mariadb
-  #   environment:
-  #     MYSQL_PORT: 3306
-  #     MYSQL_ROOT_PASSWORD: superS3cret!
-  #     MYSQL_PASSWORD: pa55Word!
-  #     MYSQL_USER: demo
-  #     MYSQL_DATABASE: demodb
+  - name: publish
+    image: plugins/docker
+    pull: if-not-exists
+    settings:
+      repo: jimsheldon/go-fruits-api
+      auto_tag: true
+      auto_tag_suffix: build-${DRONE_BUILD_NUMBER}
+      dockerfile: docker/Dockerfile.linux.amd64
+      username:
+        from_secret: dockerhub-username
+      password:
+        from_secret: dockerhub-password
+    when:
+      event:
+        exclude:
+          - pull_request
+
+services:
+  - name: postgresql
+    image: postgres:14.4-alpine
+    environment:
+      POSTGRES_PORT: 5432
+      POSTGRES_PASSWORD: pa55Word!
+      POSTGRES_USER: demo
+      POSTGRES_DB: demodb
+
+trigger:
+  branch:
+    include:
+      - main
+  ref:
+    exclude:
+      - refs/tags/**
