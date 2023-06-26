@@ -76,9 +76,6 @@ trigger:
   branch:
     include:
       - main
-  event:
-    - push
-    - pull_request
   ref:
     exclude:
       - refs/tags/**
