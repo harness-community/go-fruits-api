@@ -5,6 +5,11 @@ A simple Fruits REST API built in `golang` using Labstack's [Echo](https://https
 - For RDBMS(PostgreSQL,MySQL/MariaDB) demo use the [main](../../tree/main) branch
 - NoSQL(__MongoDB__) please switch to [mongodb](../../tree/mongodb) branch.
 
+  | ℹ️ Note |
+  |---------|
+  | In addition to the application itself, this project can be used to demonstrate [AIDA](https://www.harness.io/products/aida) and [Remote Debug](https://developer.harness.io/docs/continuous-integration/troubleshoot-ci/debug- 
+ mode/) with [Harness CI](https://www.harness.io/products/continuous-integration). Follow [these instructions](.harness/README.md) to experiment with these features in your Harness account. |
+
 ## Pre-requisites
 
 - [Docker Desktop](https://docs.docker.com/desktop/)
