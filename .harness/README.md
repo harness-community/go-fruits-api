@@ -13,8 +13,7 @@ This guide covers how to use [AIDA](https://www.harness.io/products/aida) and [R
 3.
     a. If you are new to Harness CI, signup for [Harness CI](https://app.harness.io/auth/#/signup)
       * Select the `Continuous Integration` module and choose the `Starter pipeline` wizard to create your first pipeline using the forked repo from #2.
-      * Go to the newly created pipeline and hit the `Triggers`tab. If everything went well, you should see two triggers auto-created. A `Pull Request` trigger and a `Push` trigger. For this exercise, we only need `Push` trigger to be enabled. So, please disable or delete the `Pull Request` trigger.
-   
+
     b. If you are an existing Harness CI user, create a new pipeline to use the cloud option for infrastructure and setup the PR trigger.
 
 4. To enable Remote Debug in your Harness account, check the [Remote Debug](https://developer.harness.io/docs/continuous-integration/troubleshoot-ci/debug-mode/) documentation.
@@ -44,7 +43,6 @@ This guide covers how to use [AIDA](https://www.harness.io/products/aida) and [R
                   name: postgres
                   identifier: postgres
                   spec:
-                    connectorRef: YOUR_DOCKER_HUB_CONNECTOR
                     image: postgres:14.4-alpine
                     shell: Sh
                     envVariables:
@@ -60,7 +58,6 @@ This guide covers how to use [AIDA](https://www.harness.io/products/aida) and [R
                   spec:
                     shell: Sh
                     command: |-
-                      go clean -testcache
                       go test -race ./... -v
                     envVariables:
                       POSTGRES_HOST: postgres
@@ -70,8 +67,6 @@ This guide covers how to use [AIDA](https://www.harness.io/products/aida) and [R
                       POSTGRES_DB: demodb
                       FRUITS_DB_TYPE: pgsql
 ```
-
-Replace `YOUR_DOCKER_HUB_CONNECTOR` with your [Docker Hub connector](https://developer.harness.io/docs/platform/connectors/cloud-providers/ref-cloud-providers/docker-registry-connector-settings-reference/) ID.
 
 7. Save your changes, then click "Run" to run the pipeline.
 
@@ -104,10 +99,9 @@ Replace `YOUR_DOCKER_HUB_CONNECTOR` with your [Docker Hub connector](https://dev
     root@6e7e65fb23628de1:/harness# 
     ```
 
-12. Reproduce the `test` pipeline step failure by running the same commands in your SSH session:
+12. Reproduce the `test` pipeline step failure by running the test command in your SSH session:
 
     ```
-    go clean -testcache
     go test -race ./... -v
     ```
 
